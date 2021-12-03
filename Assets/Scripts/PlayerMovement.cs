@@ -14,11 +14,13 @@ public class PlayerMovement : MonoBehaviour
     public float horizontalMoveSpeed = 15f;
     public float jumpHeight;
     public int defaultAdditionalJumps = 1;
-    public int additionalJumps;
+    private int additionalJumps;
     public bool grounded;
     public bool facingRight;
     public Vector3 respawnPos;
     public Vector3 lastRespawnPos;
+    public float coyoteTime=0.2f;
+    private float coyoteCounter=0.2f;
     void Start()
     {
         respawnPos = new Vector3(0, -1, 0);
@@ -29,6 +31,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Grounded();
         PlayAnimtionsBasedOnMovement();
+        CheckForCoyoteTime();
     }
 
     void Update()
@@ -50,10 +53,16 @@ public class PlayerMovement : MonoBehaviour
         {
             RB2D.velocity = new Vector2(0f, RB2D.velocity.y);
         }
-
-        if (Input.GetButtonDown("Jump") && additionalJumps>0)
+        // let the player jump after falling down from platform
+        if (Input.GetButtonDown("Jump") && coyoteCounter>0)
         {
-            RB2D.velocity = new Vector2(RB2D.velocity.x,jumpHeight);
+            RB2D.velocity = new Vector2(RB2D.velocity.x, jumpHeight);
+            Anim.SetTrigger("jump");
+        }
+        // let player double jump when coyote time is no longer
+        if (Input.GetButtonDown("Jump") && additionalJumps > 0 && coyoteCounter ==0)
+        {
+            RB2D.velocity = new Vector2(RB2D.velocity.x, jumpHeight);
             Anim.SetTrigger("jump");
             additionalJumps--;
         }
@@ -71,11 +80,30 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
-                grounded = false;
+                grounded = false;  
             }
 
         }
     }
+    /// <summary>
+    /// Give time to jump after falling from platforms
+    /// </summary>
+    void CheckForCoyoteTime()
+    {
+        if (grounded)
+        {
+            coyoteCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteCounter -= Time.deltaTime;
+            if (coyoteCounter < 0)
+            {
+                coyoteCounter = 0;
+            }
+        }
+    }
+    
     void Flip()
     {
         if (horizontalMove > 0 && !facingRight)
