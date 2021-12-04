@@ -6,6 +6,7 @@ public class PlayerMovement : MonoBehaviour
 {
     private Rigidbody2D RB2D;
     private Animator Anim;
+    public float keys=0f;
     public GameManager gameManager;
     public LayerMask WhatIsGround;
     public Transform groundCheck;
@@ -134,7 +135,7 @@ public class PlayerMovement : MonoBehaviour
         {
             gameManager.Respawn();
         }
-        if (other.CompareTag("Chest"))
+        if (other.CompareTag("Chest") && keys>0)
         {
             respawnPos = other.transform.position;
         }
