@@ -4,88 +4,199 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private Rigidbody2D RB2D;
-    private Animator Anim;
-    public float keys=0f;
-    public GameManager gameManager;
-    public LayerMask WhatIsGround;
-    public Transform groundCheck;
-    public float groundRadius;
-    public float horizontalMove = 0f;
+    [Header("Values")]
     public float horizontalMoveSpeed = 15f;
     public float jumpHeight;
+    public float groundRadius;
+    public float coyoteTime=0.2f;
+    public float dashTime = 3f;
     public int defaultAdditionalJumps = 1;
-    private int additionalJumps;
+    public float jumpMultiplier;
+    public float fallMultiplier;
+    public float afterDashCooldown;
+    public float dashDistance;
+    public float distanceBetweenImage;
+    
+    [Header("Checks")]
     public bool grounded;
     public bool facingRight;
+    public bool isDashing;
+    public float horizontalMove = 0f;
+    public float keys=0f;
     public Vector3 respawnPos;
-    public Vector3 lastRespawnPos;
-    public float coyoteTime=0.2f;
-    private float coyoteCounter=0.2f;
+    [Header("Objects")]
+    public GameManager gameManager;
+    public LayerMask WhatIsGround;
+    public Transform ground1;
+    public Transform ground2;
+    public ParticleSystem dashReady;
+    public ParticleSystem run;
+
+    private ParticleSystem.ShapeModule runShape;
+    private ParticleSystem.EmissionModule runEmision;
+    private ParticleSystem.EmissionModule dashReadyEmision;
+    private float lastImageXpos;
+    private Vector2 workSpace;
+    private bool canJump = true;
+    private bool canDash=true;
+    private bool canMove=true;
+    private int facingDirection;
+    private Rigidbody2D RB2D;
+    private Animator Anim;
+    [Header("Controls")]
+    [SerializeField] private Vector3 lastRespawnPos;
+    [SerializeField] private int additionalJumps;
+    [SerializeField] private float dashCounter = 3f;
+    [SerializeField] private float coyoteCounter=0.2f;
     void Start()
     {
+        runShape = run.shape;
+        runEmision = run.emission;
+        dashReadyEmision = dashReady.emission;
+        facingDirection = 1;
         respawnPos = new Vector3(0, -1, 0);
         RB2D = GetComponent<Rigidbody2D>();
         Anim = GetComponent<Animator>();
     }
     private void FixedUpdate()
     {
+        SetParticals();
+        CheckForAfterImage();
+        CanMove();
+        Dash();
+        BetterJump();
         Grounded();
         PlayAnimtionsBasedOnMovement();
         CheckForCoyoteTime();
+        CheckForDashTime();
     }
 
     void Update()
     {
-        
-        horizontalMove = Input.GetAxisRaw("Horizontal")*horizontalMoveSpeed;
-        
+        if (canMove)
+        {
+            dashDistance = 10;
+            horizontalMove = Input.GetAxisRaw("Horizontal") * horizontalMoveSpeed;
+        }
         if (horizontalMove>0)
         {
-            RB2D.velocity = new Vector2(horizontalMove, RB2D.velocity.y);
+            SetVelocity(horizontalMove, RB2D.velocity.y);
             Flip();
         }
         else if (horizontalMove <0)
         {
-            RB2D.velocity = new Vector2(horizontalMove, RB2D.velocity.y);
+            SetVelocity(horizontalMove, RB2D.velocity.y);
             Flip();
         }
         else
         {
-            RB2D.velocity = new Vector2(0f, RB2D.velocity.y);
+            dashDistance = 20;
+            SetVelocity(0f, RB2D.velocity.y);
         }
         // let the player jump after falling down from platform
-        if (Input.GetButtonDown("Jump") && coyoteCounter>0)
+        if (Input.GetButtonDown("Jump") && coyoteCounter>0 && canJump)
         {
-            RB2D.velocity = new Vector2(RB2D.velocity.x, jumpHeight);
+            SetVelocity(RB2D.velocity.x, jumpHeight);
             Anim.SetTrigger("jump");
         }
         // let player double jump when coyote time is no longer
-        if (Input.GetButtonDown("Jump") && additionalJumps > 0 && coyoteCounter ==0)
+        if (Input.GetButtonDown("Jump") && additionalJumps > 0 && coyoteCounter ==0&& canJump)
         {
-            RB2D.velocity = new Vector2(RB2D.velocity.x, jumpHeight);
+            SetVelocity(RB2D.velocity.x, jumpHeight);
             Anim.SetTrigger("jump");
             additionalJumps--;
+        }
+        if (Input.GetButtonDown("Dash") && canDash)
+        {
+            AfterImagePool.Instance.GetFromPool();
+            lastImageXpos = transform.position.x;
+            RB2D.gravityScale = 0;
+            isDashing = true;
+            canDash = false;
+            canJump = false;
+            canMove = false;
+        }
+    }
+    void SetParticals()
+    {
+        if (horizontalMove>0 && grounded)
+        {
+            runShape.rotation = new Vector3(1f, 270f, 0f);
+            runEmision.rateOverTime= 10;
+        }
+        else if (horizontalMove < 0 && grounded)
+        {
+            runShape.rotation = new Vector3(1f, 90f, 0f);
+            runEmision.rateOverTime = 10;
+        }
+        else
+        {
+            runEmision.rateOverTime = 0;
+        }
+        if (canDash)
+        {
+            dashReadyEmision.rateOverTime = 10;
+        }
+        else
+        {
+            dashReadyEmision.rateOverTime = 0;
+        }
+    }
+    void BetterJump()
+    {
+        if (RB2D.velocity.y<0 && !(Input.GetButton("Jump")))
+        {
+            RB2D.velocity += Vector2.up * Physics.gravity.y * fallMultiplier * Time.deltaTime;
+        }
+        if (RB2D.velocity.y > 0 &&!(Input.GetButton("Jump")))
+        {
+            RB2D.velocity += Vector2.up * Physics.gravity.y * jumpMultiplier * Time.deltaTime;
+        }
+    }
+    void Dash()
+    {
+        if (isDashing)
+        {
+            SetVelocity(RB2D.velocity.x + (dashDistance * facingDirection), 0f);
+        }
+    }
+    public void CheckForAfterImage()
+    {
+        if (isDashing)
+        {
+            if (Mathf.Abs(transform.position.x - lastImageXpos) > distanceBetweenImage)
+            {
+                AfterImagePool.Instance.GetFromPool();
+                lastImageXpos = transform.position.x;
+            }
+        }
+    }
+    void CanMove()
+    {
+        if (!isDashing)
+        {
+            canMove = true;
+            canJump = true;
         }
     }
     void Grounded()
     {
         grounded = false;
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(groundCheck.position, groundRadius, WhatIsGround);
-        for (int i = 0; i < colliders.Length; i++)
+        RaycastHit2D hit1 = Physics2D.Raycast(ground1.position, Vector2.down, -(groundRadius), WhatIsGround);
+        if (hit1.collider != null)
         {
-            if (colliders[i].gameObject != gameObject)
-            {
-                grounded = true;
-                additionalJumps = defaultAdditionalJumps;
-            }
-            else
-            {
-                grounded = false;  
-            }
-
+            grounded = true;
+            additionalJumps = defaultAdditionalJumps;
+        }
+        RaycastHit2D hit2 = Physics2D.Raycast(ground2.position, Vector2.down, -(groundRadius), WhatIsGround);
+        if (hit2.collider != null)
+        {
+            grounded = true;
+            additionalJumps = defaultAdditionalJumps;
         }
     }
+    //Timers
+    #region
     /// <summary>
     /// Give time to jump after falling from platforms
     /// </summary>
@@ -104,7 +215,63 @@ public class PlayerMovement : MonoBehaviour
             }
         }
     }
-    
+    void CheckForDashTime()
+    {
+        if (isDashing)
+        {
+            dashCounter -= Time.deltaTime;
+            if (dashCounter<0)
+            {
+                dashCounter = 0;
+            }
+        }
+        if (dashCounter==0)
+        {
+            RB2D.gravityScale = 5;
+            isDashing = false;
+        }
+        if (dashCounter==0 && grounded)
+        {
+            dashCounter = dashTime;
+            StartCoroutine("DashCooldown");
+        }
+    }
+    #endregion
+    public IEnumerator DashCooldown()
+    {
+        yield return new WaitForSeconds(afterDashCooldown);
+        canDash = true;
+    }
+    //set velocity
+    #region
+    void SetYVelocity(float value)
+    {
+        if (isDashing)
+        {
+            workSpace = new Vector2(0f, value);
+            RB2D.velocity = workSpace;
+        }
+    }
+    void SetXVelocity(float value)
+    {
+        if (isDashing)
+        {
+            workSpace = new Vector2(value, 0f);
+            RB2D.velocity = workSpace;
+        }
+    }
+    void SetVelocity(float value1,float value2)
+    {
+        workSpace = new Vector2(value1, value2);
+        RB2D.velocity = workSpace;
+        if (isDashing)
+        {
+            workSpace = new Vector2(value1, value2);
+            RB2D.velocity = workSpace;
+        }
+    }
+    #endregion
+
     void Flip()
     {
         if (horizontalMove > 0 && !facingRight)
@@ -113,6 +280,7 @@ public class PlayerMovement : MonoBehaviour
             scale.x *= -1;
             transform.localScale = scale;
             facingRight = true;
+            facingDirection = 1;
         }
         else if (horizontalMove < 0 && facingRight)
         {
@@ -120,6 +288,7 @@ public class PlayerMovement : MonoBehaviour
             scale.x *= -1;
             transform.localScale = scale;
             facingRight = false;
+            facingDirection = -1;
         }
     }
     void PlayAnimtionsBasedOnMovement()
@@ -139,5 +308,7 @@ public class PlayerMovement : MonoBehaviour
         {
             respawnPos = other.transform.position;
         }
+
     }
+    
 }
