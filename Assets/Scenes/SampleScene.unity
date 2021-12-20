@@ -251,6 +251,36 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 127584155}
   m_CullTransparentMesh: 1
+--- !u!1 &191247195
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 191247196}
+  m_Layer: 0
+  m_Name: WallCheckPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &191247196
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 191247195}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.26, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 366593906}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &343870680
 GameObject:
   m_ObjectHideFlags: 0
@@ -417,6 +447,7 @@ Transform:
   - {fileID: 831808617}
   - {fileID: 2142197531}
   - {fileID: 992137965}
+  - {fileID: 191247196}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -455,15 +486,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   horizontalMoveSpeed: 10
   jumpHeight: 16
-  groundRadius: 0.1
+  groundRadius: 0.02
+  wallCheckRadius: 0.4
+  wallSlidingSpeed: 1
+  wallJumpHeight: 15
   coyoteTime: 0.15
+  coyoteTimeWall: 0.1
   dashTime: 0.3
+  wallJumpTime: 0.15
   defaultAdditionalJumps: 1
   jumpMultiplier: 10
   fallMultiplier: 3
   afterDashCooldown: 0.5
-  dashDistance: 10
+  dashDistance: 20
   distanceBetweenImage: 0.1
+  airAcceleration: 1.2
+  wallJumping: 0
+  hugingWall: 0
+  backWall: 0
+  wallSliding: 0
   grounded: 0
   facingRight: 1
   isDashing: 0
@@ -476,11 +517,15 @@ MonoBehaviour:
     m_Bits: 64
   ground1: {fileID: 716471079}
   ground2: {fileID: 831808617}
+  wallCheckPoint: {fileID: 191247196}
   dashReady: {fileID: 992137967}
   run: {fileID: 2142197533}
+  facingDirection: 0
   lastRespawnPos: {x: 0, y: 0, z: 0}
   additionalJumps: 0
   dashCounter: 0.3
+  wallJumpCounter: 0.15
+  coyoteWallCounter: 0.2
   coyoteCounter: 0.2
 --- !u!95 &366593910
 Animator:
@@ -16219,7 +16264,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 716471078}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.373, y: -1.03, z: 0}
+  m_LocalPosition: {x: 0.355, y: -1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 366593906}
@@ -21155,7 +21200,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 831808616}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.304, y: -1.03, z: 0}
+  m_LocalPosition: {x: -0.251, y: -1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 366593906}
