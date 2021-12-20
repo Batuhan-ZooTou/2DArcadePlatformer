@@ -86,11 +86,11 @@ public class PlayerMovement : MonoBehaviour
     }
     void Update()
     {
+        CheckInput();
+        CheckMovementDirection();
         BetterJump();
         ApplyMovement();
         CheckIfWallSliding();
-        CheckMovementDirection();
-        CheckInput();
         PlayAnimtionsBasedOnMovement();
     }
     private void CheckInput()
@@ -103,7 +103,7 @@ public class PlayerMovement : MonoBehaviour
         {
             Jump();
         }
-        if (Input.GetButtonDown("Jump") && canWallJump && wallSliding && !grounded)
+        if (Input.GetButtonDown("Jump") && canWallJump && !grounded)
         {
             wallJumping = true;
             canMove = false;
@@ -125,12 +125,12 @@ public class PlayerMovement : MonoBehaviour
     void Jump()
     {
         //when grounded
-        if (coyoteCounter > 0)
+        if (coyoteCounter > 0 || grounded)
         {
             SetVelocity(RB2D.velocity.x, jumpHeight);
             coyoteCounter = 0;
-            additionalJumps--;
             Anim.SetTrigger("jump");
+            Debug.Log("normal jumped");
         }
         // let player double jump when coyote time is no longer
         else if (additionalJumps > 0 && coyoteCounter == 0)
@@ -138,24 +138,20 @@ public class PlayerMovement : MonoBehaviour
             SetVelocity(RB2D.velocity.x, jumpHeight);
             Anim.SetTrigger("jump");
             additionalJumps--;
+            Debug.Log("doublejumped");
         }  
     }
     void WallJump()
     {
-        if (wallJumping && horizontalMove != 0)
+        if (wallJumping)
         {
             SetVelocity(0f, 0f);
-            Vector2 forcetoadd = new Vector2(wallJumpHeight * wallJumpAngle.x * facingDirection, jumpHeight * wallJumpAngle.y);
+            float walljumpdirection = facingDirection;
+            Vector2 forcetoadd = new Vector2(wallJumpHeight * wallJumpAngle.x * walljumpdirection, jumpHeight * wallJumpAngle.y);
             RB2D.AddForce(forcetoadd, ForceMode2D.Impulse);
+            Debug.Log("walljumped");
             //SetVelocity(wallJumpHeight, wallJumpAngle, facingDirection);
         }
-        else if (wallJumping && horizontalMove == 0)
-        {
-            SetVelocity(0f, 0f);
-            Vector2 forcetoadd = new Vector2(wallJumpHeight * wallJumpAngle.x * facingDirection, jumpHeight+5 * wallJumpAngle.y);
-            RB2D.AddForce(forcetoadd, ForceMode2D.Impulse);
-        }
-
     }
     void CheckMovementDirection()
     {
@@ -304,6 +300,7 @@ public class PlayerMovement : MonoBehaviour
         if (wallSliding)
         {
             canWallJump = true;
+            canJump = false;
             coyoteWallCounter = coyoteTimeWall;
         }
         else if (!wallSliding)
@@ -313,10 +310,12 @@ public class PlayerMovement : MonoBehaviour
             {
                 coyoteWallCounter = 0;
                 canWallJump = false;
+                canJump = true;
             }
         }
         if (wallJumping)
         {
+            canMove = false;
             wallJumpCounter -= Time.deltaTime;
             if (wallJumpCounter<0)
             {

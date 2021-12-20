@@ -489,9 +489,9 @@ MonoBehaviour:
   groundRadius: 0.02
   wallCheckRadius: 0.4
   wallSlidingSpeed: 1
-  wallJumpHeight: 15
+  wallJumpHeight: 17
   coyoteTime: 0.15
-  coyoteTimeWall: 0.1
+  coyoteTimeWall: 0.15
   dashTime: 0.3
   wallJumpTime: 0.15
   defaultAdditionalJumps: 1
