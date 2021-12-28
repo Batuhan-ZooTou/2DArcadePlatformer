@@ -7,6 +7,7 @@ TagManager:
   - FallDetector
   - Chest
   - Ground
+  - BombIndicator
   layers:
   - Default
   - TransparentFX

@@ -24,6 +24,7 @@ public class PlayerMovement : MonoBehaviour
     public float airAcceleration;
 
     [Header("Checks")]
+    public bool insideOfArea = false;
     public bool wallJumping;
     public bool hugingWall;
     public bool backWall;
@@ -410,7 +411,18 @@ public class PlayerMovement : MonoBehaviour
         {
             respawnPos = other.transform.position;
         }
+        if (other.CompareTag("BombIndicator"))
+        {
+            insideOfArea = true;
+        }
 
+    }
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.CompareTag("BombIndicator"))
+        {
+            insideOfArea = false;
+        }
     }
     private void OnDrawGizmos()
     {

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -48,11 +49,14 @@ public class GameManager : MonoBehaviour
     {
         if (score==4)
         {
+
             endSceneTime -= Time.deltaTime;
             if (endSceneTime < 0)
             {
                 endSceneTime = 0;
-                Time.timeScale = 0;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+
+                //Time.timeScale = 0;
             }
         }
     }
