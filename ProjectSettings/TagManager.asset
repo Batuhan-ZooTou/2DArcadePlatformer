@@ -8,6 +8,7 @@ TagManager:
   - Chest
   - Ground
   - BombIndicator
+  - FinishArea
   layers:
   - Default
   - TransparentFX

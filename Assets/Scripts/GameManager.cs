@@ -23,10 +23,7 @@ public class GameManager : MonoBehaviour
     public void Respawn()
     {
         StartCoroutine("RespawnCoroutine");
-    }
-    private void FixedUpdate()
-    {
-        EndScene();
+        player.canDash = true;
     }
     public IEnumerator RespawnCoroutine()
     {
@@ -39,17 +36,13 @@ public class GameManager : MonoBehaviour
     {
         score += scorePoint;
         chestOpened.text = ("Treasure Claimed: " + score.ToString());
-        if (score==4)
-        {
-            endText.gameObject.SetActive(true);
-            chestOpened.gameObject.SetActive(false);           
-        }
     }
     public void EndScene()
     {
-        if (score==4)
+        if (score==6)
         {
-
+            endText.gameObject.SetActive(true);
+            chestOpened.gameObject.SetActive(false);
             endSceneTime -= Time.deltaTime;
             if (endSceneTime < 0)
             {

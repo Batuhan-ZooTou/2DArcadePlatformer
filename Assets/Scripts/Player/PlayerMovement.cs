@@ -51,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
     private float lastImageXpos;
     private Vector2 workSpace;
     private bool canJump = true;
-    private bool canDash = true;
+    public bool canDash = true;
     private bool canMove = true;
     private bool canWallJump = true;
     private Rigidbody2D RB2D;
@@ -72,7 +72,6 @@ public class PlayerMovement : MonoBehaviour
         runEmision = run.emission;
         dashReadyEmision = dashReady.emission;
         facingDirection = 1;
-        respawnPos = new Vector3(0, -1, 0);
         RB2D = GetComponent<Rigidbody2D>();
         Anim = GetComponent<Animator>();
     }
@@ -265,7 +264,7 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     public void CheckIfWallSliding()
     {
-        if ((hugingWall || backWall) && grounded == false && RB2D.velocity.y < 0 && !isDashing)
+        if ((hugingWall || backWall) && grounded == false && RB2D.velocity.y < 0 && !isDashing && horizontalMove!=0)
         {
             Flip();
             wallSliding = true;
@@ -414,6 +413,10 @@ public class PlayerMovement : MonoBehaviour
         if (other.CompareTag("BombIndicator"))
         {
             insideOfArea = true;
+        }
+        if (other.CompareTag("FinishArea"))
+        {
+            gameManager.EndScene();
         }
 
     }
