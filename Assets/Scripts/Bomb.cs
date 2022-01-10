@@ -6,6 +6,8 @@ public class Bomb : MonoBehaviour
 {
     public Animator animator;
     private GameManager gameManager;
+    public AudioSource expSfx;
+    private bool isLitted=false;
     [SerializeField] private GameObject indicator;
     [SerializeField] private float expDelay = 0.5f;
     void Start()
@@ -14,21 +16,25 @@ public class Bomb : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") & !isLitted)
         {
+            isLitted = true;
             indicator.SetActive(true);
             StartCoroutine("AnimateAndWait");
         }
     }
     public IEnumerator AnimateAndWait()
     {
+        gameManager.littedBomb++;
         yield return new WaitForSeconds(expDelay);
-        if (gameManager.player.insideOfArea==true)
+        if (gameManager.player.insideOfArea==true && gameManager.littedBomb==1)
         {
             gameManager.Respawn();
         }
+        gameManager.littedBomb--;
         indicator.SetActive(false);
         animator.SetTrigger("isLitted");
+        expSfx.Play();
         Destroy(this.gameObject);
     }
 }

@@ -36,6 +36,8 @@ public class PlayerMovement : MonoBehaviour
     public float keys = 0f;
     public Vector3 respawnPos;
     [Header("Objects")]
+    public AudioSource jumpSound;
+    public AudioSource dashSound;
     public GameManager gameManager;
     public LayerMask WhatIsGround;
     public Transform ground1;
@@ -67,6 +69,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float coyoteCounter = 0.2f;
     void Start()
     {
+        respawnPos = transform.position;
         wallJumpAngle.Normalize();
         runShape = run.shape;
         runEmision = run.emission;
@@ -102,6 +105,7 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Jump") && canJump && !wallSliding)
         {
             Jump();
+            jumpSound.Play();
         }
         if (Input.GetButtonDown("Jump") && canWallJump && !grounded)
         {
@@ -109,6 +113,7 @@ public class PlayerMovement : MonoBehaviour
             canMove = false;
             canJump = false;
             WallJump();
+            jumpSound.Play();
         }
         if (Input.GetButtonDown("Dash") && canDash)
         {
@@ -120,6 +125,7 @@ public class PlayerMovement : MonoBehaviour
             canJump = false;
             canMove = false;
             Dash();
+            dashSound.Play();
         }
     }
     void Jump()

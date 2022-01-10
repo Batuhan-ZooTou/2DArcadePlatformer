@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4677027763452089334}
   - component: {fileID: 5450566870921972054}
   - component: {fileID: 6099852978894308022}
+  - component: {fileID: 469665}
   m_Layer: 0
   m_Name: saw
   m_TagString: FallDetector
@@ -72,7 +73,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1599774157
   m_SortingLayer: 2
-  m_SortingOrder: 1
+  m_SortingOrder: 2
   m_Sprite: {fileID: 2371053576621247768, guid: e8f0112a5b97e5745b5433104803f94b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -119,3 +120,20 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 1.375
+--- !u!114 &469665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5474310646841955885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 379c6a62a85cd5649ae5c6d9f2139dd9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  freq: 0
+  heightAmpX: 0
+  heightAmpY: 0
+  spawnPosX: 0
+  spawnPosY: 0
