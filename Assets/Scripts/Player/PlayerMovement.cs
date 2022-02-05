@@ -69,6 +69,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float coyoteCounter = 0.2f;
     void Start()
     {
+
         respawnPos = transform.position;
         wallJumpAngle.Normalize();
         runShape = run.shape;

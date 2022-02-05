@@ -11,7 +11,7 @@ public class Saw : MonoBehaviour
     [SerializeField] private float spawnPosY;
     private void Awake()
     {
-       spawnPosX = transform.position.x;
+        spawnPosX = transform.position.x;
        spawnPosY = transform.position.y;
     }
     void Update()
