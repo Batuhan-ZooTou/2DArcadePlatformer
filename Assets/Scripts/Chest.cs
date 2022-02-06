@@ -9,7 +9,6 @@ public class Chest : MonoBehaviour
     public ParticleSystem partical;
     private PlayerMovement playerMovement;
     private GameManager gameManager;
-    public AudioSource pickedUp;
     public int scorePoint;
     private bool chestOpened=false;
     void Start()
@@ -26,7 +25,7 @@ public class Chest : MonoBehaviour
             gameManager.AddToScore(scorePoint);
             playerMovement.keys--;
             partical.Play();
-            pickedUp.Play();
+            FindObjectOfType<AudioManager>().Play("PickUp");
             SR.sprite = openState;
             partical = null;
             chestOpened = true;

@@ -6,7 +6,6 @@ public class Bomb : MonoBehaviour
 {
     public Animator animator;
     private GameManager gameManager;
-    public AudioSource expSfx;
     private bool isLitted=false;
     [SerializeField] private GameObject indicator;
     [SerializeField] private float expDelay = 0.5f;
@@ -34,7 +33,7 @@ public class Bomb : MonoBehaviour
         gameManager.littedBomb--;
         indicator.SetActive(false);
         animator.SetTrigger("isLitted");
-        expSfx.Play();
+        FindObjectOfType<AudioManager>().Play("BombExp");
         Destroy(this.gameObject);
     }
 }

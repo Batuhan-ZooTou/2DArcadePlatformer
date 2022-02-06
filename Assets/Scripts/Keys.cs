@@ -6,7 +6,6 @@ public class Keys : MonoBehaviour
 {
     private PlayerMovement playerMovement;
     public float rotationSpeed;
-    public AudioSource pickedUp;
     private float y;
 
     void Start()
@@ -24,7 +23,7 @@ public class Keys : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerMovement.keys+=1;
-            pickedUp.Play();
+            FindObjectOfType<AudioManager>().Play("PickUp");
             Destroy(this.gameObject);
         }
     }

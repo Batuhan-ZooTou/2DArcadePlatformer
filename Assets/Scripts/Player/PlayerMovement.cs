@@ -36,8 +36,6 @@ public class PlayerMovement : MonoBehaviour
     public float keys = 0f;
     public Vector3 respawnPos;
     [Header("Objects")]
-    public AudioSource jumpSound;
-    public AudioSource dashSound;
     public GameManager gameManager;
     public LayerMask WhatIsGround;
     public Transform ground1;
@@ -106,7 +104,6 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Jump") && canJump && !wallSliding)
         {
             Jump();
-            jumpSound.Play();
         }
         if (Input.GetButtonDown("Jump") && canWallJump && !grounded)
         {
@@ -114,7 +111,6 @@ public class PlayerMovement : MonoBehaviour
             canMove = false;
             canJump = false;
             WallJump();
-            jumpSound.Play();
         }
         if (Input.GetButtonDown("Dash") && canDash)
         {
@@ -126,7 +122,6 @@ public class PlayerMovement : MonoBehaviour
             canJump = false;
             canMove = false;
             Dash();
-            dashSound.Play();
         }
     }
     void Jump()
@@ -134,6 +129,7 @@ public class PlayerMovement : MonoBehaviour
         //when grounded
         if (coyoteCounter > 0 || grounded)
         {
+            FindObjectOfType<AudioManager>().Play("Jump");
             SetVelocity(RB2D.velocity.x, jumpHeight);
             coyoteCounter = 0;
             Anim.SetTrigger("jump");
@@ -142,6 +138,7 @@ public class PlayerMovement : MonoBehaviour
         // let player double jump when coyote time is no longer
         else if (additionalJumps > 0 && coyoteCounter == 0)
         {
+            FindObjectOfType<AudioManager>().Play("Jump");
             SetVelocity(RB2D.velocity.x, jumpHeight);
             Anim.SetTrigger("jump");
             additionalJumps--;
@@ -152,6 +149,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (wallJumping)
         {
+            FindObjectOfType<AudioManager>().Play("Jump");
             SetVelocity(0f, 0f);
             float walljumpdirection = facingDirection;
             Vector2 forcetoadd = new Vector2(wallJumpHeight * wallJumpAngle.x * walljumpdirection, jumpHeight * wallJumpAngle.y);
@@ -236,6 +234,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isDashing)
         {
+            FindObjectOfType<AudioManager>().Play("Dash");
             SetVelocity(0f, 0f);
             Vector2 forcetoadd = new Vector2((dashDistance * facingDirection), 0f);
             RB2D.AddForce(forcetoadd, ForceMode2D.Impulse);

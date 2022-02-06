@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    public LevelLoader levelLoader;
     public PlayerMovement player;
     public float respawnDelay;
     public float score;
@@ -13,19 +14,19 @@ public class GameManager : MonoBehaviour
     public Text chestOpened;
     public Text endText;
     [HideInInspector]public float littedBomb;
-    public AudioSource deadSound;
-    public AudioSource respawnSound;
 
     void Awake()
     {
         player = FindObjectOfType<PlayerMovement>();
+        levelLoader = FindObjectOfType<LevelLoader>();
+        FindObjectOfType<AudioManager>().Play("LevelSound");
     }
     
 
 
     public void Respawn()
     {
-        deadSound.Play();
+        FindObjectOfType<AudioManager>().Play("Death");
         StartCoroutine("RespawnCoroutine");
         player.canDash = true;
     }
@@ -35,7 +36,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(respawnDelay);
         player.transform.position = player.respawnPos;
         player.gameObject.SetActive(true);
-        respawnSound.Play();
+        FindObjectOfType<AudioManager>().Play("Respawn");
     }
     public void AddToScore(int scorePoint)
     {
@@ -53,7 +54,8 @@ public class GameManager : MonoBehaviour
         {
             endText.gameObject.SetActive(true);
             chestOpened.gameObject.SetActive(false);
-            StartCoroutine("LoadScene");
+            levelLoader.LoadLevel(SceneManager.GetActiveScene().buildIndex + 1);
+            //StartCoroutine("LoadScene");
         }
     }
     
