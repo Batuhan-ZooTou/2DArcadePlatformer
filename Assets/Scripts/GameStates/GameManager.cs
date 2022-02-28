@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,8 +12,8 @@ public class GameManager : MonoBehaviour
     public float respawnDelay;
     public float score;
     public Canvas canvas;
-    public Text chestOpened;
     public Text endText;
+    public TextMeshProUGUI chestOpened;
     [HideInInspector]public float littedBomb;
 
     void Awake()
@@ -41,7 +42,7 @@ public class GameManager : MonoBehaviour
     public void AddToScore(int scorePoint)
     {
         score += scorePoint;
-        chestOpened.text = ("Treasure Claimed: " + score.ToString());
+        chestOpened.text = ("Treasure Claýmed:" + score.ToString());
     }
     public IEnumerator LoadScene()
     {
