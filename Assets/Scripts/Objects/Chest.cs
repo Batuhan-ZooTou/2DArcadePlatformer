@@ -23,7 +23,7 @@ public class Chest : MonoBehaviour
             gameManager.AddToScore(scorePoint);
             other.GetComponent<StateMachina>().keys -= 1;
             partical.Play();
-            FindObjectOfType<AudioManager>().Play("PickUp");
+            FindObjectOfType<AudioManager>().PlaySound("PickUp");
             SR.sprite = openState;
             partical = null;
             chestOpened = true;

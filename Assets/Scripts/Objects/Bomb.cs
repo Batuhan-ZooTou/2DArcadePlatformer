@@ -33,7 +33,7 @@ public class Bomb : MonoBehaviour
         gameManager.littedBomb--;
         indicator.SetActive(false);
         animator.SetTrigger("isLitted");
-        FindObjectOfType<AudioManager>().Play("BombExp");
+        FindObjectOfType<AudioManager>().PlaySound("BombExp");
         Destroy(this.gameObject);
     }
 }

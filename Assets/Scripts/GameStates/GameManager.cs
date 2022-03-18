@@ -20,16 +20,21 @@ public class GameManager : MonoBehaviour
     {
         player = FindObjectOfType<StateMachina>();
         levelLoader = FindObjectOfType<LevelLoader>();
-        FindObjectOfType<AudioManager>().Play("LevelSound");
+        StartCoroutine("StartMusic");
     }
-    
+    IEnumerator StartMusic()
+    {
+        yield return new WaitForSeconds(0.5f);
+        FindObjectOfType<AudioManager>().PlaySound("LevelSound");
+
+    }
 
 
     public void Respawn()
     {
-        FindObjectOfType<AudioManager>().Play("Death");
+        FindObjectOfType<AudioManager>().PlaySound("Death");
         StartCoroutine("RespawnCoroutine");
-        player.canDash = true;
+        
     }
     public IEnumerator RespawnCoroutine()
     {
@@ -37,7 +42,9 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(respawnDelay);
         player.transform.position = player.respawnPos;
         player.gameObject.SetActive(true);
-        FindObjectOfType<AudioManager>().Play("Respawn");
+        player.canDash = true;
+        player.grounded = true;
+        FindObjectOfType<AudioManager>().PlaySound("Respawn");
     }
     public void AddToScore(int scorePoint)
     {

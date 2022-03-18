@@ -21,7 +21,7 @@ public class Keys : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             other.GetComponent<StateMachina>().keys += 1;
-            FindObjectOfType<AudioManager>().Play("PickUp");
+            FindObjectOfType<AudioManager>().PlaySound("PickUp");
             Destroy(this.gameObject);
         }
     }

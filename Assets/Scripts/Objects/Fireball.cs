@@ -77,6 +77,7 @@ public class Fireball : MonoBehaviour
         if (collision.CompareTag("Enemy"))
         {
             collision.gameObject.SetActive(false);
+            FindObjectOfType<AudioManager>().PlaySound("Fireball");
             gameObject.SetActive(false);
         }
         if (collision.CompareTag("Ground"))

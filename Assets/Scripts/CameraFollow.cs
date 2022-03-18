@@ -16,8 +16,11 @@ public class CameraFollow : MonoBehaviour
 
     void Update()
     {
-        
-        if (player.horizontalMove>0 && !player.wallSliding)
+        if (player.velocity.y < -11)
+        {
+            offSetPos = new Vector3(Player.position.x, Player.position.y, Player.position.z - 10);
+        }
+        else if (player.horizontalMove>0 && !player.wallSliding)
         {
             offSetPos = new Vector3(Player.position.x + offSet, Player.position.y+2, Player.position.z - 10);
         }
