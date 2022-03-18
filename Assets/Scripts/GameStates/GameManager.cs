@@ -8,7 +8,7 @@ using TMPro;
 public class GameManager : MonoBehaviour
 {
     public LevelLoader levelLoader;
-    public PlayerMovement player;
+    public StateMachina player;
     public float respawnDelay;
     public float score;
     public Canvas canvas;
@@ -18,7 +18,7 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        player = FindObjectOfType<PlayerMovement>();
+        player = FindObjectOfType<StateMachina>();
         levelLoader = FindObjectOfType<LevelLoader>();
         FindObjectOfType<AudioManager>().Play("LevelSound");
     }
