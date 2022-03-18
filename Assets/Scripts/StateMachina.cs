@@ -40,9 +40,9 @@ public class StateMachina : MonoBehaviour
     #endregion
 
     #region
-    public float apex = 1.5f;
-    public float ClampVerticalSpeed;
     [Header("Values")]
+    public float ClampVerticalSpeed;
+    public float apex = 1.5f;
     public float horizontalMoveSpeed = 15f;
     public float jumpHeight;
     public float groundRadius;
@@ -72,13 +72,14 @@ public class StateMachina : MonoBehaviour
     public bool backWall;
     public bool wallSliding;
     public bool grounded;
-    public bool facingRight;
     public bool isDashing;
     public float horizontalMove = 0f;
     public float verticalMove;
     public bool abovePlatform;
     public float keys = 0f;
+    public int direction;
     public Vector3 respawnPos;
+
     [Header("Objects")]
     public GameManager gameManager;
     public ParticleSystem dashReady;
@@ -93,19 +94,18 @@ public class StateMachina : MonoBehaviour
     private Vector2 wallJumpAngle = new Vector2(1, 2);
     private float lastImageXpos;
     private Vector2 workSpace;
-    private bool canJump = true;
-    public bool canDash = true;
-    private bool canMove = true;
-    private bool canWallJump = true;
     private Rigidbody2D RB2D;
     private Animator Anim;
-    [Header("Controls")]
 
+    [Header("Controls")]
     [SerializeField] private bool onApexPoint;
     [SerializeField] private bool rise;
     [SerializeField] private bool stable;
     [SerializeField] private bool descend;
-    [SerializeField] public int direction;
+    [SerializeField] private bool canJump = true;
+    [SerializeField] public bool canDash = true;
+    [SerializeField] private bool canMove = true;
+    [SerializeField] private bool canWallJump = true;
     [SerializeField] private Vector3 lastRespawnPos;
     [SerializeField] private int additionalJumps;
     [SerializeField] private float dashCounter = 3f;
@@ -114,8 +114,6 @@ public class StateMachina : MonoBehaviour
     [SerializeField] private float coyoteCounter = 0.1f;
     [SerializeField] private float fireballCounter = 2f;
     #endregion
-
-    //[Header("data")]
     private void Awake()
     {
         respawnPos = transform.position;
@@ -125,28 +123,33 @@ public class StateMachina : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        StartCoroutine("CheckForApexPoint");
-        StartCoroutine("CheckHeight");
-        BetterJump();
-        CheckSurroundings();
-        CheckForAfterImage();
-        CheckForWallJumpTime();
-        CheckForCoyoteTime();
-        CheckForDashTime();
-        SetParticals();
-        Reload();
-
+        if (Time.timeScale==1)
+        {
+            StartCoroutine("CheckForApexPoint");
+            StartCoroutine("CheckHeight");
+            BetterJump();
+            CheckSurroundings();
+            CheckForAfterImage();
+            CheckForWallJumpTime();
+            CheckForCoyoteTime();
+            CheckForDashTime();
+            SetParticals();
+            Reload();
+        }
     }
     private void Update()
     {
-        PlayAnimtionsBasedOnMovement();
-        CheckInput();
-        SetState();
-        CheckState();
-        if (!hugingWall && !backWall)
+        if (Time.timeScale == 1)
         {
-            onRightWall = false;
-            onLeftWall = false;
+            PlayAnimtionsBasedOnMovement();
+            CheckInput();
+            SetState();
+            CheckState();
+            if (!hugingWall && !backWall)
+            {
+                onRightWall = false;
+                onLeftWall = false;
+            }
         }
     }
     #region
@@ -204,7 +207,6 @@ public class StateMachina : MonoBehaviour
                 break;
             case OnWallState.Jumping:
                 SetVelocity(wallJumpHeight, wallJumpAngle, direction);
-                FindObjectOfType<AudioManager>().Play("Jump");
                 Anim.SetTrigger("jump");
                 break;
         }
@@ -276,10 +278,6 @@ public class StateMachina : MonoBehaviour
             lastImageXpos = transform.position.x;
             horizontalMove = 0;
             RB2D.gravityScale = 0;
-            isDashing = true;
-            canDash = false;
-            canJump = false;
-            canMove = false;
             SetVelocity(0f, 0f);
             isDashing = true;
             canDash = false;
@@ -377,6 +375,7 @@ public class StateMachina : MonoBehaviour
                 if (Input.GetButtonDown("Jump") && wallSliding && horizontalMove<0)
                 {
                     ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.Jumping,  -horizontalMove);
+                    FindObjectOfType<AudioManager>().Play("Jump");
                     Debug.Log("walljumped");
                     wallSliding = false;
                     wallJumping = true;
@@ -397,6 +396,7 @@ public class StateMachina : MonoBehaviour
                 if (Input.GetButtonDown("Jump") && wallSliding && horizontalMove > 0)
                 {
                     ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.Jumping, -horizontalMove);
+                    FindObjectOfType<AudioManager>().Play("Jump");
                     Debug.Log("walljumped");
                     wallSliding = false;
                     wallJumping = true;
@@ -418,12 +418,11 @@ public class StateMachina : MonoBehaviour
     }
     private void OnCollisionStay2D(Collision2D other)
     {
-        if (other.gameObject.CompareTag("Ground"))
+        if (other.gameObject.CompareTag("Platform"))
         {
             abovePlatform = true;
             if (Input.GetButton("Jump") && verticalMove == -1 && abovePlatform)
             {
-                //other.gameObject.GetComponent<PlatformEffector2D>().surfaceArc = 0;
                 other.gameObject.GetComponent<Collider2D>().isTrigger = true;
                 other.gameObject.GetComponent<Platforms>().StartCoroutine("DoubleSidedPlatform");
             }
@@ -438,14 +437,11 @@ public class StateMachina : MonoBehaviour
         if (isDashing)
         {
             SetVelocity((dashDistance * direction), 0f);
-
-
             dashCounter -= Time.deltaTime;
             if (dashCounter < 0)
             {
                 dashCounter = 0;
                 SetVelocity(0f, 0f);
-
             }
         }
         if (dashCounter == 0)
@@ -471,7 +467,6 @@ public class StateMachina : MonoBehaviour
         if (wallSliding)
         {
             canWallJump = true;
-            //canJump = false;
             coyoteWallCounter = coyoteTimeWall;
         }
         else if (!wallSliding)
@@ -681,7 +676,7 @@ public class StateMachina : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         lastRespawnPos = respawnPos;
-        if (collision.gameObject.CompareTag("FallDetector"))
+        if (collision.gameObject.CompareTag("Enemy"))
         {
             gameManager.Respawn();
         }

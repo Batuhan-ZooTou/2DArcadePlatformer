@@ -10,6 +10,7 @@ TagManager:
   - BombIndicator
   - FinishArea
   - Enemy
+  - Platform
   layers:
   - Default
   - TransparentFX
