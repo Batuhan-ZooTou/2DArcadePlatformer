@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
     public float score;
     public Canvas canvas;
     public Text endText;
+    public int needScoreToPass=6;
     public TextMeshProUGUI chestOpened;
     [HideInInspector]public float littedBomb;
 
@@ -26,7 +27,6 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
         FindObjectOfType<AudioManager>().PlaySound("LevelSound");
-
     }
 
 
@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour
     }
     public void EndScene()
     {
-        if (score==6)
+        if (score == SceneManager.GetActiveScene().buildIndex + 3)
         {
             endText.gameObject.SetActive(true);
             chestOpened.gameObject.SetActive(false);

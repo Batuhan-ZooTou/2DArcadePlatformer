@@ -13141,7 +13141,7 @@ MonoBehaviour:
   player: {fileID: 661391025}
   offSet: 4
   offSetPos: {x: 0, y: 0, z: 0}
-  moveSpeed: 5
+  moveSpeed: 2
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0

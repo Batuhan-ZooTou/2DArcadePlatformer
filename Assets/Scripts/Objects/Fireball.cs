@@ -24,9 +24,9 @@ public class Fireball : MonoBehaviour
             {
                 rb2d.velocity = new Vector2(speed * direction, rb2d.velocity.y);
                 if (direction>0)
-                    transform.Rotate(transform.rotation.z, 0, -4);
+                    transform.Rotate(0, 0, -3);
                 else
-                    transform.Rotate(transform.rotation.z, 0, 4);
+                    transform.Rotate(0, 0, 3);
             }
         }
         else

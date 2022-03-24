@@ -63,15 +63,14 @@ public class StateMachina : MonoBehaviour
     public float airAcceleration;
 
     [Header("Checks")]
+    public bool knockedBack = false;
     public bool insideOfArea = false;
-    public bool onRightWall;
     public bool canShoot=true;
-    public bool onLeftWall;
+    public bool onRightWall=false;
+    public bool onLeftWall=false;
     public bool wallJumping;
-    public bool hugingWall;
-    public bool backWall;
     public bool wallSliding;
-    public bool grounded;
+    //public bool grounded=false;
     public bool isDashing;
     public float horizontalMove = 0f;
     public float verticalMove;
@@ -88,11 +87,14 @@ public class StateMachina : MonoBehaviour
     public Transform ground1;
     public Transform ground2;
     public Transform wallCheckPoint;
+    public GameObject Particals;
     public GameObject fireball;
+    public Animator landAnim;
 
     [HideInInspector] public Vector2 velocity;
     private ParticleSystem.EmissionModule dashReadyEmision;
-    private Vector2 wallJumpAngle = new Vector2(1, 2);
+    private Vector2 wallJumpAngle;
+    private Vector2 dashAngle;
     private float lastImageXpos;
     private Vector2 workSpace;
     private Rigidbody2D RB2D;
@@ -106,7 +108,6 @@ public class StateMachina : MonoBehaviour
     [SerializeField] private bool canJump = true;
     [SerializeField] public bool canDash = true;
     [SerializeField] private bool canMove = true;
-    [SerializeField] private bool canWallJump = true;
     [SerializeField] private Vector3 lastRespawnPos;
     [SerializeField] private int additionalJumps;
     [SerializeField] private float dashCounter = 3f;
@@ -115,6 +116,7 @@ public class StateMachina : MonoBehaviour
     [SerializeField] private float coyoteCounter = 0.1f;
     [SerializeField] private float fireballCounter = 2f;
     #endregion
+    private bool oldGrounded;
     private void Awake()
     {
         Time.timeScale = 1f;
@@ -130,10 +132,10 @@ public class StateMachina : MonoBehaviour
             StartCoroutine("CheckForApexPoint");
             StartCoroutine("CheckHeight");
             BetterJump();
-            CheckSurroundings();
             CheckForAfterImage();
-            CheckForWallJumpTime();
             CheckForCoyoteTime();
+            CheckForWallJumpTime();
+
             CheckForDashTime();
             SetParticals();
             Reload();
@@ -143,16 +145,33 @@ public class StateMachina : MonoBehaviour
     {
         if (Time.timeScale == 1)
         {
+            CheckSurroundings();
             velocity = RB2D.velocity;
+            ExitState();
+
             PlayAnimtionsBasedOnMovement();
             CheckInput();
             SetState();
             CheckState();
-            if (!hugingWall && !backWall)
+        }
+    }
+    private bool _grounded;
+    public bool grounded
+    {
+        get { return _grounded; }
+        set
+        {
+            //Check if the bloolen variable changes from false to true
+            if (_grounded == false && value == true)
             {
-                onRightWall = false;
-                onLeftWall = false;
+                // Do something
+                //Debug.Log("Boolean variable chaged from:" + _grounded + " to: " + value);
+                Particals.transform.position = new Vector3(transform.position.x,transform.position.y-0.45f,transform.position.z);
+                landAnim.SetTrigger("land");
+                Debug.Log("landed");
             }
+            //Update the boolean variable
+            _grounded = value;
         }
     }
     #region
@@ -162,14 +181,33 @@ public class StateMachina : MonoBehaviour
         onGroundState = onground;
         onWallState = onwall;
         if (direction>0)
-        {
             facingDirection = FacingDirection.Right;
-        }
         else if(direction<0)
-        {
             facingDirection = FacingDirection.Left;
-        }
-        
+    }
+    private void ChangeOnGroundState(OnGroundState onGround,float direction)
+    {
+        onGroundState = onGround;
+        if (direction > 0)
+            facingDirection = FacingDirection.Right;
+        else if (direction < 0)
+            facingDirection = FacingDirection.Left;
+    }
+    private void ChangeOnAirState(OnAirState onAir, float direction)
+    {
+        onAirState = onAir;
+        if (direction > 0)
+            facingDirection = FacingDirection.Right;
+        else if (direction < 0)
+            facingDirection = FacingDirection.Left;
+    }
+    private void ChangeOnWallState(OnWallState onWall, float direction)
+    {
+        onWallState = onWall;
+        if (direction > 0)
+            facingDirection = FacingDirection.Right;
+        else if (direction < 0)
+            facingDirection = FacingDirection.Left;
     }
     public void SetState()
     {
@@ -184,7 +222,6 @@ public class StateMachina : MonoBehaviour
         Vector2 scale = transform.localScale;
         switch (facingDirection)
         {
-
             case FacingDirection.Right:
                 scale.x = 0.75f;
                 transform.localScale = scale;
@@ -222,20 +259,22 @@ public class StateMachina : MonoBehaviour
             case OnAirState.NotOnAir:
                 break;
             case OnAirState.Idle:
+                if (verticalMove!=0)
+                    dashAngle = new Vector2(0, verticalMove);
+                else
+                    dashAngle = new Vector2(1*direction, verticalMove);
                 break;
             case OnAirState.Moving:
                 SetVelocity(horizontalMove * airAcceleration, RB2D.velocity.y);
-
                 break;
             case OnAirState.Jumping:
                 SetVelocity(RB2D.velocity.x, jumpHeight);
                 FindObjectOfType<AudioManager>().PlaySound("Jump");
                 Anim.SetTrigger("jump");
                 additionalJumps--;
-
                 break;
             case OnAirState.CoyoteJump:
-                SetVelocity(RB2D.velocity.x, jumpHeight);
+                SetVelocity(RB2D.velocity.x*direction, jumpHeight);
                 FindObjectOfType<AudioManager>().PlaySound("Jump");
                 Anim.SetTrigger("jump");
                 break;
@@ -246,18 +285,34 @@ public class StateMachina : MonoBehaviour
         switch (onGroundState)
         {
             case OnGroundState.NotOnGround:
+                landAnim.SetBool("run", false);
                 break;
             case OnGroundState.Descend:
+                landAnim.SetBool("run", false);
                 SetVelocity(RB2D.velocity.x, -jumpHeight / 2);
                 Anim.SetTrigger("jump");
                 break;
             case OnGroundState.Idle:
+                landAnim.SetBool("run", false);
                 SetVelocity(0f, RB2D.velocity.y);
+                if (verticalMove != 0)
+                {
+                    dashAngle = new Vector2(0, verticalMove);
+                }
+                else
+                {
+                    dashAngle = new Vector2(1 * direction, verticalMove);
+                }
                 break;
             case OnGroundState.Moving:
+                Particals.transform.position = new Vector3(transform.position.x, transform.position.y - 0.6f, transform.position.z);
+                landAnim.SetBool("run", true);
                 SetVelocity(horizontalMove, RB2D.velocity.y);
                 break;
             case OnGroundState.Jumping:
+                landAnim.SetBool("run", false);
+                Particals.transform.position = new Vector3(transform.position.x, transform.position.y - 0.6f, transform.position.z);
+                landAnim.SetTrigger("jump");
                 SetVelocity(RB2D.velocity.x, jumpHeight);
                 coyoteCounter = 0;
                 FindObjectOfType<AudioManager>().PlaySound("Jump");
@@ -267,10 +322,11 @@ public class StateMachina : MonoBehaviour
     }
     private void CheckInput()
     {
-        if (canMove && !isDashing)
+        if (canMove && !isDashing && !wallJumping && !knockedBack)
         {
             horizontalMove = Input.GetAxisRaw("Horizontal") * horizontalMoveSpeed;
             verticalMove = Input.GetAxisRaw("Vertical");
+            dashAngle = new Vector2(direction,verticalMove);
         }
         if (Input.GetButtonDown("Dash")  && canDash)
         {
@@ -290,19 +346,18 @@ public class StateMachina : MonoBehaviour
             canShoot = false;
             fireball.transform.position = new Vector2(wallCheckPoint.position.x + (0.5f*direction), wallCheckPoint.position.y);
             fireball.SetActive(true);
+            knockedBack = true;
+            StartCoroutine("KnockbackReset");
+            RB2D.AddForce(new Vector2(5f * -direction, 0f),ForceMode2D.Impulse);
             FindObjectOfType<AudioManager>().PlaySound("Fireball");
         }
     }
     void SetParticals()
     {
         if (canDash)
-        {
             dashReadyEmision.rateOverTime = 10;
-        }
         else
-        {
             dashReadyEmision.rateOverTime = 0;
-        }
     }
     public void CheckForAfterImage()
     {
@@ -317,106 +372,143 @@ public class StateMachina : MonoBehaviour
     }
     void CheckState()
     {
-        //when on ground
+        //While on ground
         if (grounded && !isDashing)
         {
-            ChangeState(OnAirState.NotOnAir, OnGroundState.Idle,OnWallState.NotOnWall,horizontalMove);
+            //When idling
+            ChangeOnGroundState(OnGroundState.Idle, horizontalMove);
             if (horizontalMove != 0)
             {
-                ChangeState(OnAirState.NotOnAir, OnGroundState.Moving, OnWallState.NotOnWall,  horizontalMove);
-
+                //When moving
+                ChangeOnGroundState(OnGroundState.Moving, horizontalMove);
             }
             if (Input.GetButtonDown("Jump") && coyoteCounter > 0 && canJump)
             {
-                ChangeState(OnAirState.NotOnAir, OnGroundState.Jumping, OnWallState.NotOnWall,  horizontalMove);
+                //When pressed jump while still on ground
+                ChangeOnGroundState(OnGroundState.Jumping, horizontalMove);
                 Debug.Log("normal jumped");
             }
             if (Input.GetButtonDown("Jump") && verticalMove == -1 && abovePlatform && canJump)
             {
-                ChangeState(OnAirState.NotOnAir, OnGroundState.Descend, OnWallState.NotOnWall,  horizontalMove);
+                //When pressed jump while on top of platform
+                ChangeOnGroundState(OnGroundState.Descend, horizontalMove);
                 FindObjectOfType<AudioManager>().PlaySound("Jump");
-
             }
         }
-        //when on air
-        if (!grounded && !isDashing && !wallJumping && !isDashing)
+        //While on air
+        if (!grounded && !isDashing && !wallJumping && !wallSliding)
         {
-            ChangeState(OnAirState.Moving, OnGroundState.NotOnGround, OnWallState.NotOnWall,  horizontalMove);
-            if (horizontalMove == 0 && !wallSliding)
+            //When air accelerating
+            ChangeOnAirState(OnAirState.Idle, horizontalMove);
+            if (horizontalMove != 0)
             {
-                ChangeState(OnAirState.Idle, OnGroundState.NotOnGround, OnWallState.NotOnWall, horizontalMove);
+                //When idling
+                ChangeOnAirState(OnAirState.Moving, horizontalMove);
             }
-            if (Input.GetButtonDown("Jump") && !wallSliding && canJump)
+            //When pressed jump
+            if (Input.GetButtonDown("Jump")  && canJump)
             {
                 if (coyoteCounter > 0)
                 {
-                    ChangeState(OnAirState.CoyoteJump, OnGroundState.NotOnGround, OnWallState.NotOnWall,  horizontalMove);
+                    //When tried to coyote jump
+                    ChangeOnAirState(OnAirState.CoyoteJump, horizontalMove);
+                    coyoteCounter = 0;
                     Debug.Log("coyote jumped");
-
                 }
-                else if (coyoteWallCounter>0 || canWallJump )
+                else if (coyoteWallCounter > 0)
                 {
-                    ChangeState(OnAirState.CoyoteJump, OnGroundState.NotOnGround, OnWallState.NotOnWall, horizontalMove);
+                    //When tried to coyote jump from wall
+                    ChangeOnAirState(OnAirState.CoyoteJump, horizontalMove);
+                    coyoteWallCounter = 0;
                     Debug.Log("coyotewall jumped");
                 }
                 else if (additionalJumps > 0 && coyoteCounter == 0)
                 {
-                    ChangeState(OnAirState.Jumping, OnGroundState.NotOnGround, OnWallState.NotOnWall,  horizontalMove);
+                    //When jump for twice on air
+                    ChangeOnAirState(OnAirState.Jumping, horizontalMove);
                     Debug.Log("double jumped");
                 }
             }
+            
         }
-        //when wall slide
-        if (!grounded && (hugingWall || backWall) && descend && horizontalMove != 0 && !isDashing)
+        //While on wall
+        if (!grounded && (onLeftWall || onRightWall) && horizontalMove != 0 && !isDashing)
         {
-            //sliding from left
-            if ((direction == -1 && horizontalMove < 0 && !onRightWall && !wallJumping) || (onLeftWall && !onRightWall && !wallJumping))
+            if (onLeftWall && descend && horizontalMove<0 && !wallJumping)
             {
-                ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.Sliding,  -horizontalMove);
+                ChangeOnWallState(OnWallState.Sliding, 1);
                 wallSliding = true;
-                onRightWall = false;
-                onLeftWall = true;
-                if (Input.GetButtonDown("Jump") && wallSliding && horizontalMove<0)
+                if (Input.GetButtonDown("Jump"))
                 {
-                    ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.Jumping,  -horizontalMove);
+                    //When tried to jump while moving toward the wall
                     FindObjectOfType<AudioManager>().PlaySound("Jump");
                     Debug.Log("walljumped");
                     wallSliding = false;
                     wallJumping = true;
-                }
-                //moving right from left
-                else if (horizontalMove > 0)
-                {
-                    ChangeState(OnAirState.Moving, OnGroundState.NotOnGround, OnWallState.NotOnWall,  horizontalMove);
-                }
-            }         
-            //sliding from right
-            if ((direction == 1 && horizontalMove > 0 && !onLeftWall && !wallJumping) || (!onLeftWall && onRightWall && !wallJumping))
-            {
-                ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.Sliding,  -horizontalMove);
-                wallSliding = true;
-                onLeftWall = false;
-                onRightWall = true;
-                if (Input.GetButtonDown("Jump") && wallSliding && horizontalMove > 0)
-                {
-                    ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.Jumping, -horizontalMove);
-                    FindObjectOfType<AudioManager>().PlaySound("Jump");
-                    Debug.Log("walljumped");
-                    wallSliding = false;
-                    wallJumping = true;
-                }
-                //moving left from right
-                else if (horizontalMove < 0)
-                {
-                    ChangeState(OnAirState.Moving, OnGroundState.NotOnGround, OnWallState.NotOnWall,  horizontalMove);
+                    canMove = false;
+                    canJump = false;
+                    wallJumpAngle = new Vector2(1, 2);
+                    ChangeOnWallState(OnWallState.Jumping, 1);
                 }
             }
-            
-
+            if (onRightWall && descend && horizontalMove > 0 && !wallJumping)
+            {
+                ChangeOnWallState(OnWallState.Sliding, -1);
+                wallSliding = true;
+                if (Input.GetButtonDown("Jump"))
+                {
+                    //When tried to jump while moving towards the wall
+                    //ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.Jumping, -horizontalMove);
+                    FindObjectOfType<AudioManager>().PlaySound("Jump");
+                    Debug.Log("walljumped");
+                    wallSliding = false;
+                    wallJumping = true;
+                    wallJumpAngle = new Vector2(1, -2);
+                    ChangeOnWallState(OnWallState.Jumping, -1);
+                }
+            }
+        }
+    }
+    private void ExitState()
+    {
+        //While on ground
+        if (grounded)
+        {
+            ChangeOnAirState(OnAirState.NotOnAir, horizontalMove);
+            ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
+        }
+        if (!grounded && !wallJumping && !wallSliding)
+        {
+            ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
+            ChangeOnGroundState(OnGroundState.NotOnGround, horizontalMove);
+        }
+        if (!grounded && (onLeftWall || onRightWall) && horizontalMove != 0 && !wallJumping)
+        {
+            ChangeOnGroundState(OnGroundState.NotOnGround, -horizontalMove);
+        }
+        if (horizontalMove==0 && wallSliding)
+        {
+            ChangeOnAirState(OnAirState.Idle, horizontalMove);
+            ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
+        }
+        if (onLeftWall && horizontalMove > 0)
+        {
+            ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
+            ChangeOnAirState(OnAirState.Moving, horizontalMove);
+        }
+        if (onRightWall && horizontalMove < 0)
+        {
+            ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
+            ChangeOnAirState(OnAirState.Moving, horizontalMove);
         }
         if (isDashing)
         {
-            ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.NotOnWall, horizontalMove);
+            //While dashing disable all others
+            ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.NotOnWall, direction);           
+        }
+        if (!onLeftWall && !onRightWall && !wallJumping)
+        {
+            ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
         }
 
     }
@@ -432,33 +524,41 @@ public class StateMachina : MonoBehaviour
             }
         }
         else
-        {
             abovePlatform = false;
-        }
     }
     void CheckForDashTime()
     {
         if (isDashing)
         {
-            SetVelocity((dashDistance * direction), 0f);
+            SetVelocity(dashDistance*direction,dashAngle,direction);
             dashCounter -= Time.deltaTime;
             if (dashCounter < 0)
             {
                 dashCounter = 0;
                 SetVelocity(0f, 0f);
+                RB2D.gravityScale = 4;
+                isDashing = false;
+                canMove = true;
+                canJump = true;
             }
         }
-        if (dashCounter == 0)
+        if (dashCounter == 0 && !isDashing )
         {
             RB2D.gravityScale = 4;
-            isDashing = false;
             canMove = true;
             canJump = true;
+            if ((grounded || wallSliding))
+            {
+                dashCounter = dashTime;
+                StartCoroutine("DashCooldown");
+            }
         }
-        if (dashCounter == 0 && (grounded || hugingWall))
+        if (canDash && !isDashing)
         {
+            RB2D.gravityScale = 4;
+            canMove = true;
+            canJump = true;
             dashCounter = dashTime;
-            StartCoroutine("DashCooldown");
         }
     }
     public IEnumerator DashCooldown()
@@ -466,27 +566,28 @@ public class StateMachina : MonoBehaviour
         yield return new WaitForSeconds(afterDashCooldown);
         canDash = true;
     }
+    public IEnumerator KnockbackReset()
+    {
+        yield return new WaitForSeconds(0.2f);
+        knockedBack = false;
+    }
     void CheckForWallJumpTime()
     {
         if (wallSliding)
         {
-            canWallJump = true;
             coyoteWallCounter = coyoteTimeWall;
         }
-        else if (!wallSliding)
+        else
         {
             coyoteWallCounter -= Time.deltaTime;
             if (coyoteWallCounter < 0)
             {
                 coyoteWallCounter = 0;
-                canWallJump = false;
-                canJump = true;
             }
         }
       if (wallJumping)
       {
-          canMove = false;
-          canJump = false;
+
           wallJumpCounter -= Time.deltaTime;
           if (wallJumpCounter < 0)
           {
@@ -585,16 +686,6 @@ public class StateMachina : MonoBehaviour
             onApexPoint = false;
         }
     }
-    public IEnumerator LimitMovement(bool canmove,bool canjump,float sec)
-    {
-        canMove = canmove;
-        canJump = canjump;
-        yield return new WaitForSeconds(sec);
-        canMove = true;
-        canJump = true;
-        wallJumping = false;
-        
-    }
     void BetterJump()
     {
         if (descend&&RB2D.velocity.y<-ClampVerticalSpeed)
@@ -635,7 +726,7 @@ public class StateMachina : MonoBehaviour
     public void SetVelocity(float velocity, Vector2 angle, int direction)
     {
         angle.Normalize();
-        workSpace.Set(angle.x * velocity * direction, angle.y * velocity);
+        workSpace.Set(angle.x * velocity * direction, angle.y * velocity*direction);
         RB2D.velocity = workSpace;
     }
     #region
@@ -654,8 +745,8 @@ public class StateMachina : MonoBehaviour
         {
             grounded = false;
         }
-        hugingWall = Physics2D.Raycast(wallCheckPoint.position, Vector2.right * direction, wallCheckRadius, WhatIsWall);
-        backWall = Physics2D.Raycast(wallCheckPoint.position, Vector2.right * -direction, wallCheckRadius, WhatIsWall);
+        onRightWall = Physics2D.Raycast(wallCheckPoint.position, Vector2.right * 1, wallCheckRadius, WhatIsWall);
+        onLeftWall = Physics2D.Raycast(wallCheckPoint.position, Vector2.right * -1, wallCheckRadius, WhatIsWall);
     }
     void PlayAnimtionsBasedOnMovement()
     {
@@ -671,10 +762,6 @@ public class StateMachina : MonoBehaviour
         {
             gameManager.Respawn();
         }
-        if (other.CompareTag("Chest") && keys > 0)
-        {
-            respawnPos = other.transform.position;
-        }
         if (other.CompareTag("BombIndicator"))
         {
             insideOfArea = true;
@@ -682,6 +769,11 @@ public class StateMachina : MonoBehaviour
         if (other.CompareTag("FinishArea"))
         {
             gameManager.EndScene();
+        }
+        if (other.CompareTag("DashReset"))
+        {
+            other.gameObject.SetActive(false);
+            canDash = true;
         }
 
     }
@@ -702,7 +794,8 @@ public class StateMachina : MonoBehaviour
     }
     private void OnDrawGizmos()
     {
-        Gizmos.DrawLine(wallCheckPoint.position, new Vector3(wallCheckPoint.position.x + wallCheckRadius * direction, wallCheckPoint.position.y, wallCheckPoint.position.z));
+        Gizmos.DrawLine(wallCheckPoint.position, new Vector3(wallCheckPoint.position.x + wallCheckRadius * 1, wallCheckPoint.position.y, wallCheckPoint.position.z));
+        Gizmos.DrawLine(wallCheckPoint.position, new Vector3(wallCheckPoint.position.x + wallCheckRadius * -1, wallCheckPoint.position.y, wallCheckPoint.position.z));
         Gizmos.DrawLine(ground2.position, new Vector3(ground2.position.x, ground2.position.y - groundRadius, ground2.position.z));
         Gizmos.DrawLine(ground1.position, new Vector3(ground1.position.x, ground1.position.y - groundRadius, ground1.position.z));
     }

@@ -11,6 +11,7 @@ TagManager:
   - FinishArea
   - Enemy
   - Platform
+  - DashReset
   layers:
   - Default
   - TransparentFX
