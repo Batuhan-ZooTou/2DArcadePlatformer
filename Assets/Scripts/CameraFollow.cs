@@ -1,37 +1,40 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 
 public class CameraFollow : MonoBehaviour
-{
-    public Transform Player;
+{   
+    [SerializeField]
+    private CinemachineVirtualCamera virtualCam;
+
+    private CinemachineComponentBase componentBase;
+
+
     public StateMachina player;
-    public float offSet;
-    public Vector3 offSetPos;
-    public float moveSpeed;
-    private void Start()
+    private void Awake()
     {
-        transform.position =new Vector3(Player.position.x, Player.position.y+2, Player.position.z - 10);
+        componentBase = virtualCam.GetCinemachineComponent(CinemachineCore.Stage.Body);
+
+    }
+    private void Update()
+    {
+        if (componentBase is CinemachineFramingTransposer)
+        {
+            var framingTransposer = componentBase as CinemachineFramingTransposer;
+            // Now we can change all its values easily.
+            if (player.descend)
+            {
+                framingTransposer.m_LookaheadIgnoreY = false;
+            }
+            else
+            {
+                framingTransposer.m_LookaheadIgnoreY = true;
+
+            }
+
+        }
+
     }
 
-    void Update()
-    {
-        if (player.velocity.y < -11)
-        {
-            offSetPos = new Vector3(Player.position.x, Player.position.y, Player.position.z - 10);
-        }
-        else if (player.horizontalMove>0 && !player.wallSliding)
-        {
-            offSetPos = new Vector3(Player.position.x + offSet, Player.position.y+2, Player.position.z - 10);
-        }
-        else if (player.horizontalMove<0 && !player.wallSliding)
-        {
-            offSetPos = new Vector3(Player.position.x - offSet, Player.position.y+2, Player.position.z - 10);
-        }
-        else
-        {
-            offSetPos = new Vector3(Player.position.x, Player.position.y+2, Player.position.z - 10);
-        }
-        transform.position = Vector3.Lerp(transform.position, offSetPos, Time.deltaTime*moveSpeed);
-    }
 }

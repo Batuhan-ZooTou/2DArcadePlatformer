@@ -12,6 +12,7 @@ TagManager:
   - Enemy
   - Platform
   - DashReset
+  - CamArea
   layers:
   - Default
   - TransparentFX

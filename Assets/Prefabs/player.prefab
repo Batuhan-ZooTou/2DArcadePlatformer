@@ -5325,7 +5325,7 @@ MonoBehaviour:
   wallJumpHeight: 15
   coyoteTime: 0.1
   coyoteTimeWall: 0.1
-  reloadTime: 2
+  reloadTime: 1.5
   dashTime: 0.4
   wallJumpTime: 0.15
   defaultAdditionalJumps: 1
@@ -5377,4 +5377,4 @@ MonoBehaviour:
   wallJumpCounter: 0.15
   coyoteWallCounter: 0.1
   coyoteCounter: 0.1
-  fireballCounter: 2
+  fireballCounter: 1.5

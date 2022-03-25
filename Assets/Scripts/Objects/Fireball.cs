@@ -12,13 +12,16 @@ public class Fireball : MonoBehaviour
     public int direction=1;
     public float gravityTimer=1;
     private float gravitYcounter=1;
+    private Vector2 workSpace;
+    public Vector2 angle;
     private void FixedUpdate()
     {
         if (gameObject.activeInHierarchy == true)
         {
             if (rb2d.gravityScale==0)
             {
-                rb2d.velocity = new Vector2(speed * direction, 0f);
+                //rb2d.velocity = new Vector2(speed * direction, 0f);
+                SetVelocity(speed * direction, angle, direction);
             }
             else
             {
@@ -50,19 +53,91 @@ public class Fireball : MonoBehaviour
     {
         gravitYcounter = gravityTimer;
         rb2d.gravityScale = 0;
-        transform.rotation = Quaternion.Euler(0, 0, 0);
-        Vector2 scale = transform.localScale;
-        direction = stateMachina.direction;
-        if (direction==1)
+        angle = stateMachina.dashAngle;
+        if (stateMachina.horizontalMove==0)
         {
-            scale.x = 2.5f;
-            transform.localScale = scale;
+            angle.x = 0f;
+        }
+        direction = stateMachina.direction;
+      //
+      //if (angle.y!=0)
+      //{
+      //    if (angle.x == 1)
+      //    {
+      //        transform.rotation = Quaternion.Euler(0, 0, 45 * angle.y);
+      //    }
+      //    else if (angle.x == -1)
+      //    {
+      //        transform.rotation = Quaternion.Euler(0, 0, 135 * angle.y);
+      //
+      //    }
+      //}
+      //else
+      //{
+      //   // Vector2 scale = transform.localScale;
+      //    if (direction == 1)
+      //    {
+      //        transform.rotation = Quaternion.Euler(0, 0, 0);
+      //
+      //        //scale.x = 2.5f;
+      //        //transform.localScale = scale;
+      //    }
+      //    else
+      //    {
+      //        transform.rotation = Quaternion.Euler(0, 0, 180);
+      //
+      //        //scale.x = -2.5f;
+      //        //transform.localScale = scale;
+      //    }
+      //
+      //}
+        if (angle.y == 1)
+        {
+            if (angle.x == 1)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 45);
+            }
+            else if (angle.x == -1)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 135);
+
+            }
+            else
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 90);
+
+            }
+        }
+        else if (angle.y == -1)
+        {
+            if (angle.x == 1)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, -45);
+            }
+            else if (angle.x == -1)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, -135);
+
+            }
+            else
+            {
+                transform.rotation = Quaternion.Euler(0, 0, -90);
+
+            }
         }
         else
         {
-            scale.x = -2.5f;
-            transform.localScale = scale;
+            if (direction == 1)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 0);
+            }
+            else
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 180);
+            }
+
         }
+
         spawnPoint = transform.position;
         StartCoroutine("Destroy");
     }
@@ -84,5 +159,11 @@ public class Fireball : MonoBehaviour
         {
             gameObject.SetActive(false);
         }
+    }
+    public void SetVelocity(float velocity, Vector2 angle, int direction)
+    {
+        angle.Normalize();
+        workSpace.Set(angle.x * velocity * direction, angle.y * velocity * direction);
+        rb2d.velocity = workSpace;
     }
 }

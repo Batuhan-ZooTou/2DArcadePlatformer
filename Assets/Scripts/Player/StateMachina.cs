@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Cinemachine;
 public class StateMachina : MonoBehaviour
 {
     #region
@@ -90,11 +90,12 @@ public class StateMachina : MonoBehaviour
     public GameObject Particals;
     public GameObject fireball;
     public Animator landAnim;
+    public Camera cineMachina;
 
     [HideInInspector] public Vector2 velocity;
     private ParticleSystem.EmissionModule dashReadyEmision;
     private Vector2 wallJumpAngle;
-    private Vector2 dashAngle;
+    public Vector2 dashAngle;
     private float lastImageXpos;
     private Vector2 workSpace;
     private Rigidbody2D RB2D;
@@ -104,7 +105,7 @@ public class StateMachina : MonoBehaviour
     [SerializeField] private bool onApexPoint;
     [SerializeField] private bool rise;
     [SerializeField] private bool stable;
-    [SerializeField] private bool descend;
+    [SerializeField] public bool descend;
     [SerializeField] private bool canJump = true;
     [SerializeField] public bool canDash = true;
     [SerializeField] private bool canMove = true;
