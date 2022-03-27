@@ -5,7 +5,7 @@ using UnityEngine;
 public class Platforms : MonoBehaviour
 {
     PlatformEffector2D platformEffector2D;
-    Collider2D collider;
+    new Collider2D collider;
     public float reOpen = 0.5f;
 
     private void Start()

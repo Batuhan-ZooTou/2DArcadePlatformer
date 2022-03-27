@@ -13,6 +13,8 @@ TagManager:
   - Platform
   - DashReset
   - CamArea
+  - Breakable
+  - Ladder
   layers:
   - Default
   - TransparentFX

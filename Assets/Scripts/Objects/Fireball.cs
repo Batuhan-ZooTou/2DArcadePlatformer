@@ -4,16 +4,24 @@ using UnityEngine;
 
 public class Fireball : MonoBehaviour
 {
+    private BreakableTiles _tile;
+
+    public Transform breakPoint;
+    private Rigidbody2D rb2d;
+
+    public StateMachina stateMachina;
     public float speed;
     public float lifeTime;
     private Vector2 spawnPoint;
-    public Rigidbody2D rb2d;
-    public StateMachina stateMachina;
     public int direction=1;
     public float gravityTimer=1;
     private float gravitYcounter=1;
     private Vector2 workSpace;
     public Vector2 angle;
+    private void Awake()
+    {
+        rb2d = GetComponent<Rigidbody2D>();
+    }
     private void FixedUpdate()
     {
         if (gameObject.activeInHierarchy == true)
@@ -54,90 +62,36 @@ public class Fireball : MonoBehaviour
         gravitYcounter = gravityTimer;
         rb2d.gravityScale = 0;
         angle = stateMachina.dashAngle;
-        if (stateMachina.horizontalMove==0)
+        if (stateMachina.horizontalMove==0 && stateMachina.verticalMove!=0)
         {
             angle.x = 0f;
         }
         direction = stateMachina.direction;
-      //
-      //if (angle.y!=0)
-      //{
-      //    if (angle.x == 1)
-      //    {
-      //        transform.rotation = Quaternion.Euler(0, 0, 45 * angle.y);
-      //    }
-      //    else if (angle.x == -1)
-      //    {
-      //        transform.rotation = Quaternion.Euler(0, 0, 135 * angle.y);
-      //
-      //    }
-      //}
-      //else
-      //{
-      //   // Vector2 scale = transform.localScale;
-      //    if (direction == 1)
-      //    {
-      //        transform.rotation = Quaternion.Euler(0, 0, 0);
-      //
-      //        //scale.x = 2.5f;
-      //        //transform.localScale = scale;
-      //    }
-      //    else
-      //    {
-      //        transform.rotation = Quaternion.Euler(0, 0, 180);
-      //
-      //        //scale.x = -2.5f;
-      //        //transform.localScale = scale;
-      //    }
-      //
-      //}
         if (angle.y == 1)
         {
             if (angle.x == 1)
-            {
                 transform.rotation = Quaternion.Euler(0, 0, 45);
-            }
             else if (angle.x == -1)
-            {
                 transform.rotation = Quaternion.Euler(0, 0, 135);
-
-            }
             else
-            {
                 transform.rotation = Quaternion.Euler(0, 0, 90);
-
-            }
         }
         else if (angle.y == -1)
         {
             if (angle.x == 1)
-            {
                 transform.rotation = Quaternion.Euler(0, 0, -45);
-            }
             else if (angle.x == -1)
-            {
                 transform.rotation = Quaternion.Euler(0, 0, -135);
-
-            }
             else
-            {
                 transform.rotation = Quaternion.Euler(0, 0, -90);
-
-            }
         }
         else
         {
             if (direction == 1)
-            {
                 transform.rotation = Quaternion.Euler(0, 0, 0);
-            }
             else
-            {
                 transform.rotation = Quaternion.Euler(0, 0, 180);
-            }
-
         }
-
         spawnPoint = transform.position;
         StartCoroutine("Destroy");
     }
@@ -158,6 +112,20 @@ public class Fireball : MonoBehaviour
         if (collision.CompareTag("Ground"))
         {
             gameObject.SetActive(false);
+        }
+        if (collision.CompareTag("Breakable"))
+        {
+            var worldPoint = new Vector3Int(Mathf.FloorToInt(breakPoint.transform.position.x), Mathf.FloorToInt(breakPoint.transform.position.y), 0);
+
+            var tiles = GameTiles.instance.tiles; // This is our Dictionary of tiles
+
+            if (tiles.TryGetValue(worldPoint, out _tile))
+            {
+                //print("Tile " + _tile.Name + _tile.LocalPlace);
+                _tile.TilemapMember.SetTile(_tile.LocalPlace, null);
+            }
+            gameObject.SetActive(false);
+
         }
     }
     public void SetVelocity(float velocity, Vector2 angle, int direction)
