@@ -70,27 +70,27 @@ public class Fireball : MonoBehaviour
         if (angle.y == 1)
         {
             if (angle.x == 1)
-                transform.rotation = Quaternion.Euler(0, 0, 45);
-            else if (angle.x == -1)
                 transform.rotation = Quaternion.Euler(0, 0, 135);
+            else if (angle.x == -1)
+                transform.rotation = Quaternion.Euler(0, 0, -135);
             else
-                transform.rotation = Quaternion.Euler(0, 0, 90);
+                transform.rotation = Quaternion.Euler(0, 0, 180);
         }
         else if (angle.y == -1)
         {
             if (angle.x == 1)
-                transform.rotation = Quaternion.Euler(0, 0, -45);
+                transform.rotation = Quaternion.Euler(0, 0, 45);
             else if (angle.x == -1)
-                transform.rotation = Quaternion.Euler(0, 0, -135);
+                transform.rotation = Quaternion.Euler(0, 0, -45);
             else
-                transform.rotation = Quaternion.Euler(0, 0, -90);
+                transform.rotation = Quaternion.Euler(0, 0, 0);
         }
         else
         {
             if (direction == 1)
-                transform.rotation = Quaternion.Euler(0, 0, 0);
+                transform.rotation = Quaternion.Euler(0, 0, 90);
             else
-                transform.rotation = Quaternion.Euler(0, 0, 180);
+                transform.rotation = Quaternion.Euler(0, 0, 270);
         }
         spawnPoint = transform.position;
         StartCoroutine("Destroy");

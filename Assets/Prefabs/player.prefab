@@ -5115,7 +5115,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.52, y: 0.2}
+  m_Size: {x: 0.32, y: 0.32}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
@@ -5316,7 +5316,7 @@ MonoBehaviour:
   onWallState: 2
   facingDirection: 0
   ClampVerticalSpeed: 10
-  apex: 1.2
+  apex: 2
   horizontalMoveSpeed: 7
   jumpHeight: 16
   groundRadius: 0.02
@@ -5342,6 +5342,8 @@ MonoBehaviour:
   onLeftWall: 0
   wallJumping: 0
   wallSliding: 0
+  onLadder: 0
+  grabingLadder: 0
   isDashing: 0
   horizontalMove: 0
   verticalMove: 0
@@ -5363,11 +5365,13 @@ MonoBehaviour:
   Particals: {fileID: 1322859544}
   fireball: {fileID: 0}
   landAnim: {fileID: 1322859545}
+  cineMachina: {fileID: 0}
   velocity: {x: 0, y: 0}
+  dashAngle: {x: 0, y: 0}
   onApexPoint: 0
-  rise: 0
   stable: 0
   descend: 0
+  canClimb: 0
   canJump: 1
   canDash: 1
   canMove: 1

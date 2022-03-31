@@ -65,13 +65,13 @@ public class StateMachina : MonoBehaviour
     [Header("Checks")]
     public bool knockedBack = false;
     public bool insideOfArea = false;
-    public bool canShoot=true;
-    public bool onRightWall=false;
-    public bool onLeftWall=false;
+    public bool canShoot = true;
+    public bool onRightWall = false;
+    public bool onLeftWall = false;
     public bool wallJumping;
     public bool wallSliding;
     public bool onLadder;
-    //public bool grounded=false;
+    public bool grabingLadder;
     public bool isDashing;
     public float horizontalMove = 0f;
     public float verticalMove;
@@ -104,10 +104,9 @@ public class StateMachina : MonoBehaviour
 
     [Header("Controls")]
     [SerializeField] private bool onApexPoint;
-    //[SerializeField] private bool rise;
     [SerializeField] private bool stable;
     [SerializeField] public bool descend;
-    [SerializeField] private bool canClimb=false;
+    [SerializeField] private bool canClimb = false;
     [SerializeField] private bool canJump = true;
     [SerializeField] public bool canDash = true;
     [SerializeField] private bool canMove = true;
@@ -129,7 +128,7 @@ public class StateMachina : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (Time.timeScale==1)
+        if (Time.timeScale == 1)
         {
             StartCoroutine("CheckHeight");
             BetterJump();
@@ -167,9 +166,9 @@ public class StateMachina : MonoBehaviour
             {
                 // Do something
                 //Debug.Log("Boolean variable chaged from:" + _grounded + " to: " + value);
-                Particals.transform.position = new Vector3(transform.position.x,transform.position.y-0.45f,transform.position.z);
+                Particals.transform.position = new Vector3(transform.position.x, transform.position.y - 0.45f, transform.position.z);
                 landAnim.SetTrigger("land");
-                Debug.Log("landed");
+                //Debug.Log("landed");
             }
             //Update the boolean variable
             _grounded = value;
@@ -188,24 +187,24 @@ public class StateMachina : MonoBehaviour
                 //Debug.Log("Boolean variable chaged from:" + _grounded + " to: " + value);
                 onApexPoint = true;
                 StartCoroutine("CheckForApexPoint");
-                Debug.Log("onApexPoint");
+                //Debug.Log("onApexPoint");
             }
             //Update the boolean variable
             _rise = value;
         }
     }
     #region
-    public void ChangeState(OnAirState onair,OnGroundState onground,OnWallState onwall,float direction)
+    public void ChangeState(OnAirState onair, OnGroundState onground, OnWallState onwall, float direction)
     {
         onAirState = onair;
         onGroundState = onground;
         onWallState = onwall;
-        if (direction>0)
+        if (direction > 0)
             facingDirection = FacingDirection.Right;
-        else if(direction<0)
+        else if (direction < 0)
             facingDirection = FacingDirection.Left;
     }
-    private void ChangeOnGroundState(OnGroundState onGround,float direction)
+    private void ChangeOnGroundState(OnGroundState onGround, float direction)
     {
         onGroundState = onGround;
         if (direction > 0)
@@ -279,11 +278,11 @@ public class StateMachina : MonoBehaviour
             case OnAirState.NotOnAir:
                 break;
             case OnAirState.Idle:
-                SetVelocity(0f,RB2D.velocity.y);
-                if (verticalMove!=0)
+                SetVelocity(0f, RB2D.velocity.y);
+                if (verticalMove != 0)
                     dashAngle = new Vector2(0, verticalMove);
                 else
-                    dashAngle = new Vector2(1*direction, verticalMove);
+                    dashAngle = new Vector2(1 * direction, verticalMove);
                 break;
             case OnAirState.Moving:
                 SetVelocity(horizontalMove * airAcceleration, RB2D.velocity.y);
@@ -295,7 +294,7 @@ public class StateMachina : MonoBehaviour
                 additionalJumps--;
                 break;
             case OnAirState.CoyoteJump:
-                SetVelocity(RB2D.velocity.x*direction, jumpHeight);
+                SetVelocity(RB2D.velocity.x * direction, jumpHeight);
                 FindObjectOfType<AudioManager>().PlaySound("Jump");
                 Anim.SetTrigger("jump");
                 break;
@@ -347,9 +346,9 @@ public class StateMachina : MonoBehaviour
         {
             horizontalMove = Input.GetAxisRaw("Horizontal") * horizontalMoveSpeed;
             verticalMove = Input.GetAxisRaw("Vertical");
-            dashAngle = new Vector2(direction,verticalMove);
+            dashAngle = new Vector2(direction, verticalMove);
         }
-        if (Input.GetButtonDown("Dash")  && canDash)
+        if (Input.GetButtonDown("Dash") && canDash)
         {
             FindObjectOfType<AudioManager>().PlaySound("Dash");
             AfterImagePool.Instance.GetFromPool();
@@ -362,31 +361,43 @@ public class StateMachina : MonoBehaviour
             canJump = false;
             canMove = false;
         }
-        if (Input.GetAxisRaw("Fire1")>0 && canShoot)
+        if (Input.GetAxisRaw("Fire1") > 0 && canShoot)
         {
             canShoot = false;
-            fireball.transform.position = new Vector2(wallCheckPoint.position.x , wallCheckPoint.position.y);
+            fireball.transform.position = new Vector2(wallCheckPoint.position.x-(0.2f*direction), wallCheckPoint.position.y);
             fireball.SetActive(true);
             knockedBack = true;
             StartCoroutine("KnockbackReset");
-            RB2D.AddForce(new Vector2(5f * -direction, 0f),ForceMode2D.Impulse);
+            RB2D.AddForce(new Vector2(5f * -direction, 0f), ForceMode2D.Impulse);
             FindObjectOfType<AudioManager>().PlaySound("Fireball");
             return;
         }
-        if (verticalMove!=0 && canClimb)
+        if (verticalMove != 0 && canClimb)
         {
             RB2D.gravityScale = 0;
             onLadder = true;
+            grabingLadder = false;
             Anim.SetBool("Climbing", true);
-            SetVelocity(horizontalMove*0.5f, 8f*verticalMove);
+            SetVelocity(horizontalMove * 0.5f, 8f * verticalMove);
             additionalJumps = defaultAdditionalJumps;
         }
-        else if (verticalMove==0 || !canClimb)
+        else if (Input.GetAxisRaw("Grab")<0 && canClimb && !grounded)
         {
-           if (!isDashing)
-           {
-               RB2D.gravityScale = 4;
-           }
+            Anim.SetTrigger("Grabing");
+            grabingLadder = true;
+            onLadder = false;
+            Anim.SetBool("Climbing", false);
+            SetVelocity(0f,0.784f);
+            RB2D.gravityScale = 0;
+            additionalJumps = defaultAdditionalJumps;
+        }
+        else if (verticalMove == 0 || !canClimb)
+        {
+            if (!isDashing)
+            {
+                RB2D.gravityScale = 4;
+            }
+            grabingLadder = false;
             onLadder = false;
             Anim.SetBool("Climbing", false);
         }
@@ -435,7 +446,7 @@ public class StateMachina : MonoBehaviour
             }
         }
         //While on air
-        if (!grounded && !isDashing && !wallJumping && !wallSliding && !onLadder)
+        if (!grounded && !isDashing && !wallJumping && !wallSliding && !onLadder && !grabingLadder)
         {
             //When air accelerating
             ChangeOnAirState(OnAirState.Idle, horizontalMove);
@@ -445,7 +456,7 @@ public class StateMachina : MonoBehaviour
                 ChangeOnAirState(OnAirState.Moving, horizontalMove);
             }
             //When pressed jump
-            if (Input.GetButtonDown("Jump")  && canJump)
+            if (Input.GetButtonDown("Jump") && canJump)
             {
                 if (coyoteCounter > 0)
                 {
@@ -468,12 +479,12 @@ public class StateMachina : MonoBehaviour
                     Debug.Log("double jumped");
                 }
             }
-            
+
         }
         //While on wall
-        if (!grounded && (onLeftWall || onRightWall) && horizontalMove != 0 && !isDashing && !onLadder)
+        if (!grounded && (onLeftWall || onRightWall) && horizontalMove != 0 && !isDashing && !onLadder && !grabingLadder)
         {
-            if (onLeftWall && descend && horizontalMove<0 && !wallJumping)
+            if (onLeftWall && descend && horizontalMove < 0 && !wallJumping)
             {
                 ChangeOnWallState(OnWallState.Sliding, 1);
                 wallSliding = true;
@@ -525,7 +536,7 @@ public class StateMachina : MonoBehaviour
         {
             ChangeOnGroundState(OnGroundState.NotOnGround, -horizontalMove);
         }
-        if (horizontalMove==0 && wallSliding)
+        if (horizontalMove == 0 && wallSliding)
         {
             ChangeOnAirState(OnAirState.Idle, horizontalMove);
             ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
@@ -540,10 +551,10 @@ public class StateMachina : MonoBehaviour
             ChangeOnWallState(OnWallState.NotOnWall, horizontalMove);
             ChangeOnAirState(OnAirState.Moving, horizontalMove);
         }
-        if (isDashing || onLadder)
+        if (isDashing || onLadder ||grabingLadder)
         {
             //While dashing disable all others
-            ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.NotOnWall, direction);           
+            ChangeState(OnAirState.NotOnAir, OnGroundState.NotOnGround, OnWallState.NotOnWall, direction);
         }
         if (!onLeftWall && !onRightWall && !wallJumping)
         {
@@ -551,12 +562,12 @@ public class StateMachina : MonoBehaviour
         }
 
     }
-    
+
     void CheckForDashTime()
     {
         if (isDashing)
         {
-            SetVelocity(dashDistance*direction,dashAngle,direction);
+            SetVelocity(dashDistance * direction, dashAngle, direction);
             dashCounter -= Time.deltaTime;
             if (dashCounter < 0)
             {
@@ -568,12 +579,12 @@ public class StateMachina : MonoBehaviour
                 canJump = true;
             }
         }
-        if (dashCounter == 0 && !isDashing )
+        if (dashCounter == 0 && !isDashing)
         {
             RB2D.gravityScale = 4;
             canMove = true;
             canJump = true;
-            if ((grounded || wallSliding || onLadder))
+            if ((grounded || wallSliding || onLadder || grabingLadder))
             {
                 dashCounter = dashTime;
                 StartCoroutine("DashCooldown");
@@ -611,22 +622,22 @@ public class StateMachina : MonoBehaviour
                 coyoteWallCounter = 0;
             }
         }
-      if (wallJumping)
-      {
+        if (wallJumping)
+        {
 
-          wallJumpCounter -= Time.deltaTime;
-          if (wallJumpCounter < 0)
-          {
-              wallJumpCounter = 0;
-          }
-      }
-      if (wallJumpCounter == 0)
-      {
-          wallJumping = false;
-          canMove = true;
-          canJump = true;
-          wallJumpCounter = wallJumpTime;
-      }
+            wallJumpCounter -= Time.deltaTime;
+            if (wallJumpCounter < 0)
+            {
+                wallJumpCounter = 0;
+            }
+        }
+        if (wallJumpCounter == 0)
+        {
+            wallJumping = false;
+            canMove = true;
+            canJump = true;
+            wallJumpCounter = wallJumpTime;
+        }
     }
     void CheckForCoyoteTime()
     {
@@ -656,7 +667,7 @@ public class StateMachina : MonoBehaviour
             {
                 fireballCounter = 0;
             }
-            if (fireballCounter==0)
+            if (fireballCounter == 0)
             {
                 canShoot = true;
             }
@@ -692,7 +703,7 @@ public class StateMachina : MonoBehaviour
     }
     public IEnumerator CheckForApexPoint()
     {
-        if (wallSliding || onLadder)
+        if (wallSliding || onLadder ||grabingLadder)
         {
             onApexPoint = false;
             airAcceleration = 1.2f;
@@ -707,7 +718,7 @@ public class StateMachina : MonoBehaviour
     void BetterJump()
     {
         //caping fall speed
-        if (descend&&RB2D.velocity.y<-ClampVerticalSpeed)
+        if (descend && RB2D.velocity.y < -ClampVerticalSpeed)
         {
             SetVelocity(RB2D.velocity.x, -ClampVerticalSpeed);
         }
@@ -719,23 +730,25 @@ public class StateMachina : MonoBehaviour
         {
             ClampVerticalSpeed = 10;
         }
-        //falls faster when not holding jump
-        if (descend && !(Input.GetButton("Jump")))
+        if (!grabingLadder)
         {
-            RB2D.velocity += Vector2.up * Physics.gravity.y * fallMultiplier * Time.deltaTime;
+            //falls faster when not holding jump
+            if (descend && !(Input.GetButton("Jump")))
+            {
+                RB2D.velocity += Vector2.up * Physics.gravity.y * fallMultiplier * Time.deltaTime;
+            }
+            //for little jumps
+            if (rise && !(Input.GetButton("Jump")))
+            {
+                RB2D.velocity += Vector2.up * Physics.gravity.y * jumpMultiplier * Time.deltaTime;
+            }
+            //apex point
+            if (descend && onApexPoint && (Input.GetButton("Jump")) && horizontalMove != 0)
+            {
+                airAcceleration = 1.6f;
+                RB2D.velocity -= Vector2.up * Physics.gravity.y * apex * Time.deltaTime;
+            }
         }
-        //for little jumps
-        if (rise && !(Input.GetButton("Jump")))
-        {
-            RB2D.velocity += Vector2.up * Physics.gravity.y * jumpMultiplier * Time.deltaTime;
-        }
-        //apex point
-        if (descend && onApexPoint && (Input.GetButton("Jump")) && horizontalMove!=0)
-        {
-            airAcceleration = 1.6f;
-            RB2D.velocity -= Vector2.up * Physics.gravity.y * apex * Time.deltaTime;
-        }
-        
     }
     void SetVelocity(float value1, float value2)
     {
@@ -750,7 +763,7 @@ public class StateMachina : MonoBehaviour
     public void SetVelocity(float velocity, Vector2 angle, int direction)
     {
         angle.Normalize();
-        workSpace.Set(angle.x * velocity * direction, angle.y * velocity*direction);
+        workSpace.Set(angle.x * velocity * direction, angle.y * velocity * direction);
         RB2D.velocity = workSpace;
     }
     #region
