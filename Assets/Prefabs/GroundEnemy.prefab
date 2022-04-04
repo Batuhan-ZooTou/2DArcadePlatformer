@@ -143,12 +143,13 @@ MonoBehaviour:
   activateDistance: 8
   pathUpdateSeconds: 0.2
   walkTimeRange: {x: 2, y: 5}
-  speed: 800
+  speed: 350
   nextWaypointDistance: 1
-  jumpHeight: 250
+  jumpHeight: 300
   followEnabled: 1
   jumpEnabled: 1
   directionLookEnabled: 1
+  healt: 100
   wallCheckRadius: 0.9
   groundRadius: 0.2
   WhatIsWall:

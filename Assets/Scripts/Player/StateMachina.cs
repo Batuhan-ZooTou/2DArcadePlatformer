@@ -25,6 +25,7 @@ public class StateMachina : MonoBehaviour
         Moving,
         Jumping,
         Descend,
+        OnMovingPlatform,
         NotOnGround
     }
     public enum FacingDirection
@@ -61,11 +62,16 @@ public class StateMachina : MonoBehaviour
     public float dashDistance;
     public float distanceBetweenImage;
     public float airAcceleration;
+    public float atkDmg;
+    public float atkSpd;
+
 
     [Header("Checks")]
+    public bool onMovingPlatform=false;
     public bool knockedBack = false;
     public bool insideOfArea = false;
     public bool canShoot = true;
+    public bool canAttack = true;
     public bool onRightWall = false;
     public bool onLeftWall = false;
     public bool wallJumping;
@@ -92,6 +98,7 @@ public class StateMachina : MonoBehaviour
     public GameObject fireball;
     public Animator landAnim;
     public Camera cineMachina;
+    public GameObject attackIndicator;
 
     [HideInInspector] public Vector2 velocity;
     private ParticleSystem.EmissionModule dashReadyEmision;
@@ -101,6 +108,7 @@ public class StateMachina : MonoBehaviour
     private Vector2 workSpace;
     private Rigidbody2D RB2D;
     private Animator Anim;
+    private float velocityOnPlatform;
 
     [Header("Controls")]
     [SerializeField] private bool onApexPoint;
@@ -126,6 +134,12 @@ public class StateMachina : MonoBehaviour
         Anim = GetComponent<Animator>();
         RB2D = GetComponent<Rigidbody2D>();
     }
+    private void OnEnable()
+    {
+        isDashing = false;
+        StartCoroutine("AttackOrder");
+        Particals.SetActive(false);
+    }
     private void FixedUpdate()
     {
         if (Time.timeScale == 1)
@@ -145,6 +159,7 @@ public class StateMachina : MonoBehaviour
     {
         if (Time.timeScale == 1)
         {
+            isAttacking();
             CheckSurroundings();
             velocity = RB2D.velocity;
             ExitState();
@@ -327,7 +342,25 @@ public class StateMachina : MonoBehaviour
             case OnGroundState.Moving:
                 Particals.transform.position = new Vector3(transform.position.x, transform.position.y - 0.6f, transform.position.z);
                 landAnim.SetBool("run", true);
-                SetVelocity(horizontalMove, RB2D.velocity.y);
+                if (isAttacking())
+                {
+                    SetVelocity(5*direction, RB2D.velocity.y);
+                }
+                else
+                {
+                    SetVelocity(horizontalMove, RB2D.velocity.y);
+                }
+                break;
+            case OnGroundState.OnMovingPlatform:
+                SetVelocity(velocityOnPlatform, RB2D.velocity.y);
+                if (verticalMove != 0)
+                {
+                    dashAngle = new Vector2(0, verticalMove);
+                }
+                else
+                {
+                    dashAngle = new Vector2(1 * direction, verticalMove);
+                }
                 break;
             case OnGroundState.Jumping:
                 landAnim.SetBool("run", false);
@@ -361,15 +394,23 @@ public class StateMachina : MonoBehaviour
             canJump = false;
             canMove = false;
         }
-        if (Input.GetAxisRaw("Fire1") > 0 && canShoot)
+       //if (Input.GetAxisRaw("Fire1") > 0 && canShoot)
+       //{
+       //    canShoot = false;
+       //    fireball.transform.position = new Vector2(wallCheckPoint.position.x-(0.2f*direction), wallCheckPoint.position.y);
+       //    fireball.SetActive(true);
+       //    knockedBack = true;
+       //    StartCoroutine("KnockbackReset");
+       //    RB2D.AddForce(new Vector2(5f * -direction, 0f), ForceMode2D.Impulse);
+       //    FindObjectOfType<AudioManager>().PlaySound("Fireball");
+       //    return;
+       //}
+        if (Input.GetKeyDown(KeyCode.C) && canAttack)
         {
-            canShoot = false;
-            fireball.transform.position = new Vector2(wallCheckPoint.position.x-(0.2f*direction), wallCheckPoint.position.y);
-            fireball.SetActive(true);
-            knockedBack = true;
-            StartCoroutine("KnockbackReset");
-            RB2D.AddForce(new Vector2(5f * -direction, 0f), ForceMode2D.Impulse);
-            FindObjectOfType<AudioManager>().PlaySound("Fireball");
+            canAttack = false;
+            attackIndicator.SetActive(true);
+            FindObjectOfType<AudioManager>().PlaySound("Dash");
+            StartCoroutine("AttackOrder");
             return;
         }
         if (verticalMove != 0 && canClimb)
@@ -400,6 +441,26 @@ public class StateMachina : MonoBehaviour
             grabingLadder = false;
             onLadder = false;
             Anim.SetBool("Climbing", false);
+        }
+    }
+    IEnumerator AttackOrder()
+    {
+        yield return new WaitForSeconds(0.25f);
+        attackIndicator.SetActive(false);
+        yield return new WaitForSeconds(1 / atkSpd-0.25f);
+        canAttack = true;
+
+    }
+    public bool isAttacking()
+    {
+        if (attackIndicator.activeInHierarchy)
+        {
+            float direction1 = direction;
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
     void SetParticals()
@@ -435,6 +496,7 @@ public class StateMachina : MonoBehaviour
             if (Input.GetButtonDown("Jump") && coyoteCounter > 0 && canJump)
             {
                 //When pressed jump while still on ground
+                onMovingPlatform = false;
                 ChangeOnGroundState(OnGroundState.Jumping, horizontalMove);
                 Debug.Log("normal jumped");
             }
@@ -443,6 +505,11 @@ public class StateMachina : MonoBehaviour
                 //When pressed jump while on top of platform
                 ChangeOnGroundState(OnGroundState.Descend, horizontalMove);
                 FindObjectOfType<AudioManager>().PlaySound("Jump");
+            }
+            if (onMovingPlatform && horizontalMove==0)
+            {
+                ChangeOnGroundState(OnGroundState.OnMovingPlatform, horizontalMove);
+
             }
         }
         //While on air
@@ -706,12 +773,12 @@ public class StateMachina : MonoBehaviour
         if (wallSliding || onLadder ||grabingLadder)
         {
             onApexPoint = false;
-            airAcceleration = 1.2f;
+            airAcceleration = 1.1f;
         }
         else
         {
             yield return new WaitForSeconds(0.15f);
-            airAcceleration = 1.2f;
+            airAcceleration = 1.1f;
             onApexPoint = false;
         }
     }
@@ -745,7 +812,7 @@ public class StateMachina : MonoBehaviour
             //apex point
             if (descend && onApexPoint && (Input.GetButton("Jump")) && horizontalMove != 0)
             {
-                airAcceleration = 1.6f;
+                airAcceleration = 1.5f;
                 RB2D.velocity -= Vector2.up * Physics.gravity.y * apex * Time.deltaTime;
             }
         }
@@ -795,7 +862,7 @@ public class StateMachina : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         lastRespawnPos = respawnPos;
-        if (other.CompareTag("FallDetector") || other.CompareTag("Enemy"))
+        if (other.CompareTag("FallDetector"))
         {
             gameManager.Respawn();
         }
@@ -832,6 +899,11 @@ public class StateMachina : MonoBehaviour
         else
             abovePlatform = false;
 
+        if (other.gameObject.CompareTag("MovingPlatform"))
+        {
+            velocityOnPlatform = other.gameObject.GetComponent<MovingPlatforms>().direction;
+        }
+
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -839,6 +911,19 @@ public class StateMachina : MonoBehaviour
         if (collision.gameObject.CompareTag("Enemy"))
         {
             gameManager.Respawn();
+        }
+        if (collision.gameObject.CompareTag("MovingPlatform"))
+        {
+            onMovingPlatform = true;
+            velocityOnPlatform = collision.gameObject.GetComponent<MovingPlatforms>().direction;
+        }
+
+    }
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("MovingPlatform"))
+        {
+            onMovingPlatform = false;
         }
     }
     private void OnTriggerExit2D(Collider2D other)

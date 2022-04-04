@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Pathfinding;
 
-public class GroundEnemyAI : MonoBehaviour
+public class GroundEnemyAI : MonoBehaviour, IDamageable, IKnockable
 {
     [Header("Pathfinding")]
     public Transform target;
@@ -21,7 +21,9 @@ public class GroundEnemyAI : MonoBehaviour
     public bool jumpEnabled = true;
     public bool directionLookEnabled = true;
 
-
+    [Header("Combat")]
+    public float healt = 100;
+    private bool invincible = false;
     [Header("Collision Checks")]
     public float wallCheckRadius;
     public float groundRadius;
@@ -39,7 +41,9 @@ public class GroundEnemyAI : MonoBehaviour
     private int currentWaypoint = 0;
     Seeker seeker;
     Rigidbody2D rb;
+    private Vector2 workSpace;
     Animator anim;
+    private Vector2 impulseAfterKb;
 
     private bool _grounded;
     public bool grounded
@@ -52,12 +56,13 @@ public class GroundEnemyAI : MonoBehaviour
             {
                 // Do something
                 //Debug.Log("Boolean variable chaged from:" + _grounded + " to: " + value);
-                Debug.Log("landed");
+                //Debug.Log("landed");
             }
             //Update the boolean variable
             _grounded = value;
         }
     }
+    
     public void Start()
     {
         seeker = GetComponent<Seeker>();
@@ -79,9 +84,50 @@ public class GroundEnemyAI : MonoBehaviour
     private void Update()
     {
             CheckIfTurn();
-
     }
-
+    public void damage(float amount)
+    {
+        if (!invincible)
+        {
+            //Instantiate(hitParticles, transform.position, Quaternion.Euler(0.0f, 0.0f, Random.Range(0.0f, 360.0f)));
+            Debug.Log(amount + "delt");
+            healt -= amount;
+            StartCoroutine("ResetInvincible");
+            CheckIfDead();
+        }
+    }
+    public void Knockback(Vector2 angle, float strength, int direction)
+    {
+        if (!invincible)
+        {
+            impulseAfterKb = new Vector2(2*-direction,0);
+            //SetVelocity(strength, angle, direction);
+            rb.AddForce(angle*strength*direction);
+            invincible = true;
+        }
+    }
+    public void SetVelocity(float velocity, Vector2 angle, int direction)
+    {
+        angle.Normalize();
+        workSpace.Set(angle.x * velocity * direction, angle.y * velocity);
+        rb.velocity = workSpace;
+    }
+    public void CheckIfDead()
+    {
+        if (healt <= 0)
+        {
+            healt = 0;
+            Destroy(this.gameObject);
+        }
+    }
+    IEnumerator ResetInvincible()
+    {
+        yield return new WaitForSeconds(0.15f);
+        rb.AddForce(impulseAfterKb,ForceMode2D.Impulse);
+        yield return new WaitForSeconds(0.05f);
+        //rb.velocity = new Vector2(0f, 0f);
+        invincible = false;
+    }
     private void UpdatePath()
     {
         if (followEnabled && TargetInDistance() && seeker.IsDone())
@@ -108,15 +154,14 @@ public class GroundEnemyAI : MonoBehaviour
             return;
         }
 
-        Vector2 direction = ((Vector2)path.vectorPath[currentWaypoint] - rb.position).normalized;
+        Vector2 direction = ((Vector2)path.vectorPath[currentWaypoint] - rb.position);
         Vector2 force = direction * speed * Time.deltaTime;
-
         // Jump
         if (jumpEnabled && grounded)
         {
             if (onRightWall || onLeftWall)
             {
-                Debug.Log("jumpded");
+                //Debug.Log("jumpded");
                 rb.AddForce(Vector2.up * jumpHeight);
                 anim.SetTrigger("Jump");
 
@@ -125,7 +170,7 @@ public class GroundEnemyAI : MonoBehaviour
             {
                 canJump = false;
                 StartCoroutine("ResetJump");
-                Debug.Log("jumpded");
+               // Debug.Log("jumpded");
                 rb.AddForce(Vector2.up * jumpHeight*2.5f);
                 anim.SetTrigger("Jump");
             }

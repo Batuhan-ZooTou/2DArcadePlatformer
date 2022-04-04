@@ -15,6 +15,7 @@ TagManager:
   - CamArea
   - Breakable
   - Ladder
+  - MovingPlatform
   layers:
   - Default
   - TransparentFX

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 9093024920638575084}
   - component: {fileID: 9093024920638575085}
   m_Layer: 7
-  m_Name: sheet_8
+  m_Name: ThinPlatform
   m_TagString: Platform
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayer: 3
   m_SortingOrder: 0
   m_Sprite: {fileID: -2661919970533589962, guid: 8de2d52fc07a1cb47b4845f8385452a6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

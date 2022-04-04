@@ -487,5 +487,6 @@ namespace Pathfinding {
 			if (version < 1) rotationSpeed *= 90;
 			return base.OnUpgradeSerializedData(version, unityThread);
 		}
-	}
+
+    }
 }
